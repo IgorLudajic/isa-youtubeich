@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name="USERS")
@@ -19,17 +20,14 @@ public class User implements UserDetails {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter @Setter
     private Long id;
 
-    @Column(name = "username")
     @Getter @Setter
     private String username;
 
-    @Column(name = "password")
-    @Getter
+    @Getter @Setter
     private String password;
 
     @Column(name = "first_name")
@@ -40,17 +38,19 @@ public class User implements UserDetails {
     @Getter @Setter
     private String lastName;
 
-    @Column(name = "email")
     @Getter @Setter
     private String email;
 
-    @Column(name = "enabled")
     @Getter @Setter
     private boolean enabled;
 
-    @Column(name = "last_password_reset_date")
+    @Column(name = "created_at")
     @Getter @Setter
-    private Timestamp lastPasswordResetDate;
+    private Timestamp createdAt;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter @Setter
+    private Address address;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "USER_ROLE",
@@ -59,11 +59,7 @@ public class User implements UserDetails {
     @Getter @Setter
     private List<Role> roles;
 
-    public void setPassword(String password) {
-        Timestamp now = new Timestamp(new Date().getTime());
-        this.setLastPasswordResetDate(now);
-        this.password = password;
-    }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
