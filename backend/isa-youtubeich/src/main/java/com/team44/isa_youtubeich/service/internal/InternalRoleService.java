@@ -1,10 +1,10 @@
-package com.team44.isa_youtubeich.service;
+package com.team44.isa_youtubeich.service.internal;
 
 import com.team44.isa_youtubeich.domain.model.Role;
 
 import java.util.List;
 
-public interface RoleService {
+public interface InternalRoleService {
     Role findById(Long id);
     List<Role> findByName(String name);
 }

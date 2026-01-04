@@ -1,4 +1,4 @@
-package com.team44.isa_youtubeich.service.impl;
+package com.team44.isa_youtubeich.service.internal.impl;
 
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.repository.UserRepository;
