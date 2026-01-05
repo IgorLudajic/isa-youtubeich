@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @Autowired
     private Environment environment;
 
@@ -59,6 +59,16 @@ public class GlobalExceptionHandler {
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.BAD_REQUEST.value(),
                 getErrorMessage("Bad Request", ex.getMessage()),
+                System.currentTimeMillis()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(NonOpaqueException.class)
+    public ResponseEntity<ErrorResponseDto> handleNonOpaqueException(NonOpaqueException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(), // Always return the detailed message, bypassing opaque filter
                 System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
