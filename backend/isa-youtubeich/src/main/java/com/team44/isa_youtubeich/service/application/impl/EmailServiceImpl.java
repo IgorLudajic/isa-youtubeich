@@ -17,12 +17,16 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.base.url}")
     private String baseUrl;
 
+    @Value("${spring.mail.username}")
+    private String mailUsername;
+
     @Override
     public void sendActivationEmail(User user, String activationToken) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail());
         message.setSubject("Jutjubić - Aktivacija naloga");
         message.setText(buildActivationEmailText(user, activationToken));
+        message.setFrom(mailUsername);
 
         try {
             mailSender.send(message);
