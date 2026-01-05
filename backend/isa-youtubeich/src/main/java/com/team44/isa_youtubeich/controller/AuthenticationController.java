@@ -5,7 +5,7 @@ import com.team44.isa_youtubeich.dto.JwtAuthRequestDto;
 import com.team44.isa_youtubeich.dto.UserRequestDto;
 import com.team44.isa_youtubeich.dto.UserTokenStateDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
-import com.team44.isa_youtubeich.service.UserService;
+import com.team44.isa_youtubeich.service.internal.InternalUserService;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class AuthenticationController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserService userService;
+    private InternalUserService internalUserService;
 
     @PostMapping("/login")
     public ResponseEntity<UserTokenStateDto> createAuthenticationToken(
@@ -47,16 +47,17 @@ public class AuthenticationController {
         return ResponseEntity.ok(new UserTokenStateDto(jwt, expiresIn));
     }
 
-    @PostMapping("/signup")
+    // TODO izmeniti po implementaciji UserService
+    /*@PostMapping("/signup")
     public ResponseEntity<User> addUser(@RequestBody UserRequestDto userRequest, UriComponentsBuilder ucBuilder) {
-        User existingUser = this.userService.findByUsername(userRequest.getUsername());
+        User existingUser = this.internalUserService.findByUsername(userRequest.getUsername());
 
         if (existingUser != null) {
             throw new ResourceConflictException(userRequest.getId(), "Username already exists");
         }
 
-        User user = this.userService.save(userRequest);
+        User user = this.internalUserService.save(userRequest);
 
         return new ResponseEntity<>(user, HttpStatus.CREATED);
-    }
+    }*/
 }

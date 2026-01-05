@@ -2,7 +2,7 @@ package com.team44.isa_youtubeich.config;
 
 import com.team44.isa_youtubeich.security.auth.RestAuthenticationEntryPoint;
 import com.team44.isa_youtubeich.security.auth.TokenAuthenticationFilter;
-import com.team44.isa_youtubeich.service.impl.UserDetailsServiceImpl;
+import com.team44.isa_youtubeich.service.internal.impl.UserDetailsServiceImpl;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
