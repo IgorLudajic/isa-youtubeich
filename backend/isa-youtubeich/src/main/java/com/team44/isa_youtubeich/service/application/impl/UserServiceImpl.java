@@ -1,5 +1,6 @@
 package com.team44.isa_youtubeich.service.application.impl;
 
+import com.team44.isa_youtubeich.domain.model.ActivationEmail;
 import com.team44.isa_youtubeich.domain.model.AddressJson;
 import com.team44.isa_youtubeich.domain.model.Role;
 import com.team44.isa_youtubeich.domain.model.User;
@@ -7,9 +8,12 @@ import com.team44.isa_youtubeich.dto.JwtAuthRequestDto;
 import com.team44.isa_youtubeich.dto.SignupRequestDto;
 import com.team44.isa_youtubeich.dto.UserResponseDto;
 import com.team44.isa_youtubeich.dto.UserTokenStateDto;
+import com.team44.isa_youtubeich.exception.AccountNotActivatedException;
 import com.team44.isa_youtubeich.exception.ValidationException;
+import com.team44.isa_youtubeich.repository.ActivationEmailRepository;
 import com.team44.isa_youtubeich.repository.RoleRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
+import com.team44.isa_youtubeich.service.application.EmailService;
 import com.team44.isa_youtubeich.service.application.UserService;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -42,18 +48,32 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ActivationEmailRepository activationEmailRepository;
+
+    @Autowired
+    private EmailService emailService;
+
     @Override
     public UserTokenStateDto login(JwtAuthRequestDto authenticationRequest) {
-        Authentication authentication = authenticationManager.authenticate(
+        Authentication authentication = null;
+        authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authenticationRequest.getUsername(),
                         authenticationRequest.getPassword()));
 
+        // authenticate() will throw if credentials are invalid
+        // Now check if the account is enabled only *after* successful authentication
+        User user = userRepository.findByUsername(authenticationRequest.getUsername());
+        if (user != null && !user.isEnabled()) {
+            throw new AccountNotActivatedException();
+        }
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        User user = (User) authentication.getPrincipal();
-        assert user != null;
-        String jwt = tokenUtils.generateToken(user.getUsername());
+        User authenticatedUser = (User) authentication.getPrincipal();
+        assert authenticatedUser != null;
+        String jwt = tokenUtils.generateToken(authenticatedUser.getUsername());
         long expiresIn = tokenUtils.getExpiresIn();
 
         return new UserTokenStateDto(jwt, expiresIn);
@@ -91,7 +111,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(signupRequest.getEmail());
         user.setFirstName(signupRequest.getName());
         user.setLastName(signupRequest.getSurname());
-        user.setEnabled(true);
+        user.setEnabled(false); // User disabled until email verification
         user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
         // Assign default role (ROLE_USER)
@@ -112,6 +132,20 @@ public class UserServiceImpl implements UserService {
         // Save user
         User savedUser = userRepository.save(user);
 
+        // Create activation email token
+        String activationToken = UUID.randomUUID().toString();
+        ActivationEmail activationEmail = new ActivationEmail();
+        activationEmail.setUser(savedUser);
+        activationEmail.setActivationToken(activationToken);
+        activationEmail.setIssuedAt(new Timestamp(System.currentTimeMillis()));
+        // TODO: Make configurable
+        // Token expires in 24 hours
+        activationEmail.setExpiresAt(new Timestamp(System.currentTimeMillis() + 24 * 60 * 60 * 1000));
+        activationEmailRepository.save(activationEmail);
+
+        // Send activation email
+        emailService.sendActivationEmail(savedUser, activationToken);
+
         // Convert to DTO and return
         return mapToUserResponseDto(savedUser);
     }
@@ -131,5 +165,40 @@ public class UserServiceImpl implements UserService {
         }
 
         return dto;
+    }
+
+    @Override
+    @Transactional
+    public void activateAccount(String activationToken) {
+        // Find activation email by token
+        Optional<ActivationEmail> activationEmailOpt = activationEmailRepository
+                .findByActivationToken(activationToken);
+
+        try {
+            if (activationEmailOpt.isEmpty()) {
+                throw new ValidationException("Invalid activation token");
+            }
+
+            ActivationEmail activationEmail = activationEmailOpt.get();
+
+            // Check if token has expired
+            if (activationEmail.getExpiresAt().before(new Timestamp(System.currentTimeMillis()))) {
+                throw new ValidationException("Activation token has expired");
+            }
+
+            // Enable user account
+            User user = activationEmail.getUser();
+            if (user.isEnabled()) {
+                throw new ValidationException("Account is already activated");
+            }
+
+            user.setEnabled(true);
+            userRepository.save(user);
+        } finally {
+            activationEmailOpt.ifPresent(activationEmail -> {
+                // Delete activation email record to prevent reuse
+                activationEmailRepository.delete(activationEmail);
+            });
+        }
     }
 }

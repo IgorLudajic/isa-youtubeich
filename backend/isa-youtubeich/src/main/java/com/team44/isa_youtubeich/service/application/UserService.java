@@ -9,4 +9,6 @@ public interface UserService {
     UserTokenStateDto login(JwtAuthRequestDto authenticationRequest);
 
     UserResponseDto signup(SignupRequestDto signupRequest);
+
+    void activateAccount(String activationToken);
 }
