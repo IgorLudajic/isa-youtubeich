@@ -62,7 +62,7 @@ public class WebSecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
-
+                
                 // TODO prosiriti po potrebi
 
                 .anyRequest().authenticated());

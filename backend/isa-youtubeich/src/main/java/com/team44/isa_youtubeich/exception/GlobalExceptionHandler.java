@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
+    
     @Autowired
     private Environment environment;
 
@@ -92,6 +92,16 @@ public class GlobalExceptionHandler {
                 System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponseDto> handleRateLimitExceededException(RateLimitExceededException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                ex.getMessage(),
+                System.currentTimeMillis()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
     }
 
     @ExceptionHandler(Exception.class)
