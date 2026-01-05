@@ -5,6 +5,7 @@ import com.team44.isa_youtubeich.dto.SignupRequestDto;
 import com.team44.isa_youtubeich.dto.UserResponseDto;
 import com.team44.isa_youtubeich.dto.UserTokenStateDto;
 import com.team44.isa_youtubeich.service.application.UserService;
+import com.team44.isa_youtubeich.util.RateLimited;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/auth", produces = MediaType.APPLICATION_JSON_VALUE)
+@RateLimited(key = "auth", limit = 5, windowSeconds = 60)
 public class AuthenticationController {
 
     @Autowired
