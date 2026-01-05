@@ -1,8 +1,8 @@
 -- Lozinke su hesovane pomocu BCrypt algoritma https://www.dailycred.com/article/bcrypt-calculator
 -- Lozinka za oba user-a je 123
 
-INSERT INTO USERS (id, username, password, first_name, last_name, email, enabled) VALUES (1, 'user', '$2a$04$Vbug2lwwJGrvUXTj6z7ff.97IzVBkrJ1XfApfGNl.Z695zqcnPYra', 'Marko', 'Markovic', 'user@example.com', true);
-INSERT INTO USERS (id, username, password, first_name, last_name, email, enabled) VALUES (2, 'admin', '$2a$04$Vbug2lwwJGrvUXTj6z7ff.97IzVBkrJ1XfApfGNl.Z695zqcnPYra', 'Nikola', 'Nikolic', 'admin@example.com', true);
+INSERT INTO USERS (id, username, password, first_name, last_name, email, enabled, address) VALUES (1, 'user', '$2a$04$Vbug2lwwJGrvUXTj6z7ff.97IzVBkrJ1XfApfGNl.Z695zqcnPYra', 'Marko', 'Markovic','user@example.com', true, '{"street": "123 Main St", "city": "Belgrade", "country": "Serbia"}');
+INSERT INTO USERS (id, username, password, first_name, last_name, email, enabled, address) VALUES (2, 'admin', '$2a$04$Vbug2lwwJGrvUXTj6z7ff.97IzVBkrJ1XfApfGNl.Z695zqcnPYra', 'Nikola', 'Nikolic', 'admin@example.com', true, '{"street": "456 Oak Ave", "city": "Belgrade", "country": "Serbia"}');
 
 INSERT INTO ROLE (id, name) VALUES (1, 'ROLE_USER');
 INSERT INTO ROLE (id, name) VALUES (2, 'ROLE_ADMIN');
