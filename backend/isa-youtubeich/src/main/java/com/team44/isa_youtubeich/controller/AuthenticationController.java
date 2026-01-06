@@ -1,63 +1,42 @@
 package com.team44.isa_youtubeich.controller;
 
-import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.dto.JwtAuthRequestDto;
-import com.team44.isa_youtubeich.dto.UserRequestDto;
+import com.team44.isa_youtubeich.dto.SignupRequestDto;
+import com.team44.isa_youtubeich.dto.UserResponseDto;
 import com.team44.isa_youtubeich.dto.UserTokenStateDto;
-import com.team44.isa_youtubeich.exception.ResourceConflictException;
-import com.team44.isa_youtubeich.service.internal.InternalUserService;
-import com.team44.isa_youtubeich.util.TokenUtils;
-import jakarta.servlet.http.HttpServletResponse;
+import com.team44.isa_youtubeich.service.application.UserService;
+import com.team44.isa_youtubeich.util.RateLimited;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping(value = "/auth", produces = MediaType.APPLICATION_JSON_VALUE)
+@RateLimited(key = "auth", limit = 5, windowSeconds = 60)
 public class AuthenticationController {
 
     @Autowired
-    private TokenUtils tokenUtils;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private InternalUserService internalUserService;
+    private UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<UserTokenStateDto> createAuthenticationToken(
-            @RequestBody JwtAuthRequestDto authenticationRequest, HttpServletResponse response) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                authenticationRequest.getUsername(), authenticationRequest.getPassword()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        User user = (User) authentication.getPrincipal();
-        String jwt = tokenUtils.generateToken(user.getUsername());
-        long expiresIn = tokenUtils.getExpiresIn();
-
-        return ResponseEntity.ok(new UserTokenStateDto(jwt, expiresIn));
+            @RequestBody JwtAuthRequestDto authenticationRequest) {
+        UserTokenStateDto tokenState = userService.login(authenticationRequest);
+        return ResponseEntity.ok(tokenState);
     }
 
-    // TODO izmeniti po implementaciji UserService
-    /*@PostMapping("/signup")
-    public ResponseEntity<User> addUser(@RequestBody UserRequestDto userRequest, UriComponentsBuilder ucBuilder) {
-        User existingUser = this.internalUserService.findByUsername(userRequest.getUsername());
-
-        if (existingUser != null) {
-            throw new ResourceConflictException(userRequest.getId(), "Username already exists");
-        }
-
-        User user = this.internalUserService.save(userRequest);
-
+    @PostMapping("/signup")
+    public ResponseEntity<UserResponseDto> signup(@Valid @RequestBody SignupRequestDto signupRequest) {
+        UserResponseDto user = userService.signup(signupRequest);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
-    }*/
+    }
+
+    @GetMapping("/activate")
+    public ResponseEntity<String> activateAccount(@RequestParam("token") String token) {
+        userService.activateAccount(token);
+        return ResponseEntity.ok("Account activated successfully");
+    }
 }
