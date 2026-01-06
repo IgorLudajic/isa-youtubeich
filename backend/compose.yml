@@ -1,0 +1,62 @@
+services:
+  app:
+    profiles: [ "prod" ]
+    build:
+      context: backend/isa-youtubeich
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-youtubeich}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SERVER_PORT: 8080
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app-dev:
+    profiles: [ "dev" ]
+    image: maven:3.9.12-eclipse-temurin-25-alpine
+    working_dir: /workspace
+    command: >-
+      sh -c "chmod +x mvnw && ./mvnw spring-boot:run 
+      -Dspring-boot.run.profiles=${SPRING_PROFILES_ACTIVE:-dev}
+      -Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-youtubeich}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SERVER_PORT: 8080
+    volumes:
+      - ./isa-youtubeich:/workspace
+      - maven-cache:/root/.m2
+    ports:
+      - "${APP_PORT:-8080}:8080"
+      - "${DEBUG_PORT:-5005}:5005"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-youtubeich}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-youtubeich}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
+  maven-cache:
