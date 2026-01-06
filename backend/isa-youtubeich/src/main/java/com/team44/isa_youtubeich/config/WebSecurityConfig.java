@@ -62,6 +62,7 @@ public class WebSecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/videos/**").permitAll()
 
                 // TODO prosiriti po potrebi
 
