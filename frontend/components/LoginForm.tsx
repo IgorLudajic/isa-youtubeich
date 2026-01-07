@@ -18,7 +18,11 @@ export default function LoginForm() {
     try {
       await login(data.username, data.password);
       // Redirect or handle success
-    } catch (_error) {
+    } catch (error) {
+      if ((error as { message: string }).message === "NEXT_REDIRECT") {
+        // Success, redirect is happening
+        return;
+      }
       setError("password", {
         type: "manual",
         message: "Neispravno korisničko ime ili lozinka",
