@@ -1,18 +1,24 @@
-import {getVideoDetails} from "@/lib/videofeed";
-import {getFullUrl} from "@/lib/utils";
-import {notFound} from "next/navigation";
+import { getVideoDetails } from "@/lib/videofeed";
+import { getFullUrl } from "@/lib/utils";
+import { notFound } from "next/navigation";
 import LikeDislikeButtons from "@/components/LikeDislikeButtons";
-import {i18n} from "@/lib/i18n";
+import CommentsList from "@/components/CommentsList";
+import { i18n } from "@/lib/i18n";
 
 export default async function VideoPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ commentPage?: string }>;
 }) {
   const id = parseInt((await params).id);
   if (isNaN(id)) {
     notFound();
   }
+
+  const { commentPage } = await searchParams;
+  const page = commentPage ? parseInt(commentPage) : 0;
 
   let video;
   try {
@@ -67,6 +73,10 @@ export default async function VideoPage({
             Objavljeno{" "}
             <span>{new Date(video.createdAt).toLocaleDateString()}</span>
           </p>
+        </div>
+
+        <div className="mt-8">
+          <CommentsList videoId={id} page={page} />
         </div>
       </div>
     </div>

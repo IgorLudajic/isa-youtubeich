@@ -27,6 +27,13 @@ export interface VideoDetailsDto {
   creatorUsername: string;
 }
 
+export interface CommentDto {
+  id: number;
+  text: string;
+  username: string;
+  createdAt: string;
+}
+
 export interface Page<T> {
   content: T[];
   totalElements: number;
@@ -78,4 +85,35 @@ export async function dislikeVideo(id: number) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to dislike video");
+}
+
+export async function getVideoComments(
+  videoId: number,
+  page: number = 0,
+  size: number = 10,
+): Promise<Page<CommentDto>> {
+  const res = await fetch(
+    `${baseUrl}/api/comments/video/${videoId}?page=${page}&size=${size}`,
+  );
+  if (!res.ok) throw new Error("Failed to fetch comments");
+  return res.json();
+}
+
+export async function postComment(
+  videoId: number,
+  text: string,
+): Promise<CommentDto> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) redirect("/login");
+  const res = await fetch(`${baseUrl}/api/comments/video/${videoId}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error("Failed to post comment");
+  return res.json();
 }
