@@ -91,11 +91,8 @@ export default function LikeDislikeButtons({
     <div className="flex gap-2 text-sm pt-0">
       <Button
         size="sm"
-        variant="noShadow"
         className={`transition-colors duration-200 ${
-          liked
-            ? "bg-lime-400 hover:bg-lime-500"
-            : "hover:bg-lime-500/50 bg-background"
+          liked ? "bg-lime-400 hover:bg-lime-500" : "bg-lime-500/40"
         }`}
         onClick={handleLike}
       >
@@ -103,11 +100,8 @@ export default function LikeDislikeButtons({
       </Button>
       <Button
         size="sm"
-        variant="noShadow"
         className={`transition-colors duration-200 ${
-          disliked
-            ? "bg-red-500 text-white hover:bg-red-600"
-            : "hover:bg-red-500/50 bg-background"
+          disliked ? "bg-red-500 text-white hover:bg-red-600" : "bg-red-500/50"
         }`}
         onClick={handleDislike}
       >
