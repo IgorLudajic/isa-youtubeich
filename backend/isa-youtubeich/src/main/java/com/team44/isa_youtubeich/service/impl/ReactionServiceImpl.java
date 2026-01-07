@@ -31,27 +31,45 @@ public class ReactionServiceImpl implements ReactionService {
     @Transactional
     public void react(Long videoId, ReactionType type, String username){
         User user = userRepository.findByUsername(username);
-        Video video = videoRepository.findById(videoId).orElseThrow(() -> new ResourceConflictException(videoId, "Video not found"));
+
+        if(!videoRepository.existsById(videoId)) throw new ResourceConflictException(videoId, "Video not found");
 
         Reaction existing = reactionRepository.findByVideoIdAndUserUsername(videoId, username);
 
         if(existing != null){
             if(existing.getType() == type){
                 reactionRepository.delete(existing);
+                if(type == ReactionType.LIKE)
+                    videoRepository.decrementLikes(videoId);
+                else
+                    videoRepository.decrementDislikes(videoId);
             }
             else {
                 existing.setType(type);
                 reactionRepository.save(existing);
+                if(type == ReactionType.LIKE){
+                    videoRepository.incrementLikes(videoId);
+                    videoRepository.decrementDislikes(videoId);
+                }
+                else{
+                    videoRepository.incrementDislikes(videoId);
+                    videoRepository.decrementLikes(videoId);
+                }
             }
         }
         else {
             Reaction newReaction = new Reaction();
             newReaction.setUser(user);
-            newReaction.setVideo(video);
+            newReaction.setVideo(videoRepository.getReferenceById(videoId));
             newReaction.setType(type);
             newReaction.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
             reactionRepository.save(newReaction);
+
+            if(type == ReactionType.LIKE)
+                videoRepository.incrementLikes(videoId);
+            else
+                videoRepository.incrementDislikes(videoId);
         }
     }
 }

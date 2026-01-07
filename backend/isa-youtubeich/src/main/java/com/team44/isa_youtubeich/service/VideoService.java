@@ -1,7 +1,7 @@
 package com.team44.isa_youtubeich.service;
 
 import com.team44.isa_youtubeich.domain.model.Video;
-import com.team44.isa_youtubeich.dto.CommentResponseDto;
+import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,4 +17,6 @@ public interface VideoService {
     byte[] getVideoContent(Long id);
 
     Page<VideoHomeDto> getPublicFeed(Pageable pageable);
+
+    VideoDetailsDto getVideoDetailsAndIncrementViews(Long id, String currentUsername);
 }

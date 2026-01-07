@@ -1,10 +1,14 @@
 package com.team44.isa_youtubeich.service.impl;
 
+import com.team44.isa_youtubeich.domain.model.Reaction;
+import com.team44.isa_youtubeich.domain.model.ReactionType;
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.domain.model.Video;
-import com.team44.isa_youtubeich.dto.CommentResponseDto;
+import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
+import com.team44.isa_youtubeich.exception.ResourceConflictException;
 import com.team44.isa_youtubeich.repository.CommentRepository;
+import com.team44.isa_youtubeich.repository.ReactionRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.VideoService;
@@ -31,6 +35,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private ReactionRepository reactionRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -68,6 +75,9 @@ public class VideoServiceImpl implements VideoService {
             video.setVideoUrl(savedVideoStr);
             video.setThumbnailUrl(savedThumbStr);
             video.setUser(user);
+            video.setViewCount(0L);
+            video.setLikes(0L);
+            video.setDislikes(0L);
 
             return videoRepository.save(video);
 
@@ -112,9 +122,45 @@ public class VideoServiceImpl implements VideoService {
                         video.getTitle(),
                         video.getThumbnailUrl(),
                         video.getViewCount(),
+                        video.getLikes(),
+                        video.getDislikes(),
                         Date.from(video.getCreatedAt().toInstant()),
                         video.getUser().getUsername()
                 ));
+    }
+
+    @Override
+    @Transactional
+    public VideoDetailsDto getVideoDetailsAndIncrementViews(Long id, String currentUsername){
+
+        videoRepository.incrementViewCount(id);
+
+        Video video = videoRepository.findById(id).orElseThrow(() -> new ResourceConflictException(id, "Video not found"));
+
+        VideoDetailsDto dto = new VideoDetailsDto(
+                video.getId(),
+                video.getTitle(),
+                video.getThumbnailUrl(),
+                video.getViewCount(),
+                video.getLikes(),
+                video.getDislikes(),
+                false,
+                false,
+                Date.from(video.getCreatedAt().toInstant()),
+                video.getUser().getUsername()
+        );
+
+        if(currentUsername != null){
+            Reaction reaction = reactionRepository.findByVideoIdAndUserUsername(id, currentUsername);
+            if(reaction != null){
+                if(reaction.getType() == ReactionType.LIKE)
+                    dto.setLikedByCurrentUser(true);
+                else
+                    dto.setDislikedByCurrentUser(true);
+            }
+        }
+
+        return dto;
     }
 
     private void createUploadDirectoryIfNotExists() throws IOException {

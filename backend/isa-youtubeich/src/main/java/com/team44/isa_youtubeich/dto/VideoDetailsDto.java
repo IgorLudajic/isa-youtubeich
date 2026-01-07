@@ -7,15 +7,17 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class VideoHomeDto {
+@AllArgsConstructor
+public class VideoDetailsDto {
     private Long Id;
     private String title;
     private String thumbnailUrl;
     private Long viewCount;
     private Long likes;
-    private long dislikes;
+    private Long dislikes;
+    private Boolean likedByCurrentUser;
+    private Boolean dislikedByCurrentUser;
     private Date createdAt;
     private String creatorUsername;
 }

@@ -3,6 +3,7 @@ package com.team44.isa_youtubeich.service.impl;
 import com.team44.isa_youtubeich.domain.model.Comment;
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.domain.model.Video;
+import com.team44.isa_youtubeich.dto.CommentRequestDto;
 import com.team44.isa_youtubeich.dto.CommentResponseDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
 import com.team44.isa_youtubeich.repository.CommentRepository;
@@ -32,12 +33,12 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponseDto postComment(Long videoId, String text, String username){
+    public CommentResponseDto postComment(Long videoId, CommentRequestDto requestBody, String username){
         User user = userRepository.findByUsername(username);
         Video video = videoRepository.findById(videoId).orElseThrow(() -> new ResourceConflictException(videoId, "Video not found"));
 
         Comment comment = new Comment();
-        comment.setText(text);
+        comment.setText(requestBody.getText());
         comment.setUser(user);
         comment.setVideo(video);
         comment.setCreatedAt(new Timestamp(System.currentTimeMillis()));
