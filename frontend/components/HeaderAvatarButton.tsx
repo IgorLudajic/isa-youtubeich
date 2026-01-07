@@ -18,7 +18,7 @@ export default async function HeaderAvatarButton() {
   if (!profile) return <LoginButton />;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Avatar className={"cursor-pointer size-11"}>
           <AvatarImage src={profile.avatarUrl} alt={profile.name} />
@@ -28,12 +28,15 @@ export default async function HeaderAvatarButton() {
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end">
+      <DropdownMenuContent className="w-56 bg-background" align="end">
         <DropdownMenuLabel className="select-none">Moj nalog</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <form method="post" action="/logout">
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem
+              asChild
+              className="bg-background hover:bg-red-600/50 hover:border-red-600 bg-red-400/60 border-black"
+            >
               <button
                 type="submit"
                 className="w-full flex items-center cursor-pointer"
