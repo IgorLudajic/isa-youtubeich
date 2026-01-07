@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Logout } from "@carbon/icons-react";
-import Link from "next/link";
 
 export default async function HeaderAvatarButton() {
   const profile = await getProfile();
@@ -33,12 +32,17 @@ export default async function HeaderAvatarButton() {
         <DropdownMenuLabel className="select-none">Moj nalog</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <Link className="contents" prefetch={false} href={"/logout"}>
-            <DropdownMenuItem className="cursor-pointer">
-              <Logout />
-              <span>Izloguj se</span>
+          <form method="post" action="/logout">
+            <DropdownMenuItem asChild>
+              <button
+                type="submit"
+                className="w-full flex items-center cursor-pointer"
+              >
+                <Logout />
+                <span>Izloguj se</span>
+              </button>
             </DropdownMenuItem>
-          </Link>
+          </form>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
