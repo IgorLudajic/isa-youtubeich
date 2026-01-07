@@ -10,5 +10,7 @@ public interface UserService {
 
     void activateAccount(String activationToken);
 
+    UserResponseDto getCurrentUser();
+
     UserPublicProfileDto getPublicProfile(String username, Pageable pageable);
 }
