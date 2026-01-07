@@ -26,6 +26,11 @@ public class ActivationEmail implements Serializable {
     @Getter @Setter
     private Timestamp expiresAt;
 
+    @Column(name = "activation_token", unique = true, nullable = false)
+    @Getter
+    @Setter
+    private String activationToken;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     @Getter @Setter
