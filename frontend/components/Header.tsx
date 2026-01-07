@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Header() {
   return (
     <>
-      <header className="w-full bg-main top-0 fixed border-b-2">
+      <header className="w-full bg-main top-0 fixed border-b-2 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">

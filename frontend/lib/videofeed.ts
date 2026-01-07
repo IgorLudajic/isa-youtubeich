@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export interface VideoHomeDto {
   Id: number;
@@ -55,4 +56,26 @@ export async function getVideoDetails(id: number): Promise<VideoDetailsDto> {
   const res = await fetch(`${baseUrl}/api/videos/${id}`, { headers });
   if (!res.ok) throw new Error("Failed to fetch video details");
   return res.json();
+}
+
+export async function likeVideo(id: number) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) redirect("/login");
+  const res = await fetch(`${baseUrl}/api/reactions/video/${id}?type=LIKE`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to like video");
+}
+
+export async function dislikeVideo(id: number) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) redirect("/login");
+  const res = await fetch(`${baseUrl}/api/reactions/video/${id}?type=DISLIKE`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to dislike video");
 }
