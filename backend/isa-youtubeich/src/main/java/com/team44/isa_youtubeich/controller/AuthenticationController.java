@@ -39,4 +39,10 @@ public class AuthenticationController {
         userService.activateAccount(token);
         return ResponseEntity.ok("Account activated successfully");
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> getCurrentUser() {
+        UserResponseDto user = userService.getCurrentUser();
+        return ResponseEntity.ok(user);
+    }
 }
