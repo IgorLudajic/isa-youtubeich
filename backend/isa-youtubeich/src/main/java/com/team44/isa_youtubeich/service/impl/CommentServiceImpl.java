@@ -3,6 +3,7 @@ package com.team44.isa_youtubeich.service.impl;
 import com.team44.isa_youtubeich.domain.model.Comment;
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.domain.model.Video;
+import com.team44.isa_youtubeich.dto.CacheablePagedResponse;
 import com.team44.isa_youtubeich.dto.CommentRequestDto;
 import com.team44.isa_youtubeich.dto.CommentResponseDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
@@ -10,17 +11,24 @@ import com.team44.isa_youtubeich.repository.CommentRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.CommentService;
+import com.team44.isa_youtubeich.util.CommentsRateLimiter;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class CommentServiceImpl implements CommentService {
+
+    @Autowired
+    private CommentsRateLimiter rateLimiter;
 
     @Autowired
     private CommentRepository commentRepository;
@@ -33,7 +41,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "comments", allEntries = true)
     public CommentResponseDto postComment(Long videoId, CommentRequestDto requestBody, String username){
+
+        rateLimiter.checkLimit(username);
+
         User user = userRepository.findByUsername(username);
         Video video = videoRepository.findById(videoId).orElseThrow(() -> new ResourceConflictException(videoId, "Video not found"));
 
@@ -54,13 +66,26 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public Page<CommentResponseDto> getVideoComments(Long videoId, Pageable pageable){
-        return commentRepository.findByVideoIdOrderByCreatedAtDesc(videoId, pageable)
+    @Cacheable(value = "comments", key = "#videoId + '-' + #pageable.pageNumber")
+    public CacheablePagedResponse<CommentResponseDto> getVideoComments(Long videoId, Pageable pageable){
+        Page<Comment> page = commentRepository.findByVideoIdOrderByCreatedAtDesc(videoId, pageable);
+
+        List<CommentResponseDto> content = page.getContent().stream()
                 .map(comment -> new CommentResponseDto(
                         comment.getId(),
                         comment.getText(),
                         Date.from(comment.getCreatedAt().toInstant()),
                         comment.getUser().getUsername()
-                ));
+                )).toList();
+
+        return new CacheablePagedResponse<>(
+                content,
+                page.getNumber(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getSize(),
+                page.isLast(),
+                page.isFirst()
+        );
     }
 }
