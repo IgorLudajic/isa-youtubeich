@@ -3,8 +3,8 @@ import Link from "next/link";
 
 export default function LoginButton() {
   return (
-    <Button>
-      <Link href={"/login"}>Uloguj se</Link>
-    </Button>
+    <Link href={"/login"}>
+      <Button>Uloguj se</Button>
+    </Link>
   );
 }
