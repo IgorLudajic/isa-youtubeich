@@ -8,28 +8,24 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "VIDEO_VIEWS")
+@Getter @Setter
 public class VideoView {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter @Setter
     private Long id;
 
     @Column(name = "viewed_at")
-    @Getter @Setter
     private Timestamp viewedAt;
 
     @Embedded
-    @Getter @Setter
     private GeoLocation viewedFrom;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @Getter @Setter
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "video_id")
-    @Getter @Setter
     private Video video;
 }

@@ -1,22 +1,22 @@
-package com.team44.isa_youtubeich.service.application.impl;
+package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.ActivationEmail;
 import com.team44.isa_youtubeich.domain.model.AddressJson;
 import com.team44.isa_youtubeich.domain.model.Role;
 import com.team44.isa_youtubeich.domain.model.User;
-import com.team44.isa_youtubeich.dto.JwtAuthRequestDto;
-import com.team44.isa_youtubeich.dto.SignupRequestDto;
-import com.team44.isa_youtubeich.dto.UserResponseDto;
-import com.team44.isa_youtubeich.dto.UserTokenStateDto;
+import com.team44.isa_youtubeich.dto.*;
 import com.team44.isa_youtubeich.exception.AccountNotActivatedException;
 import com.team44.isa_youtubeich.exception.ValidationException;
 import com.team44.isa_youtubeich.repository.ActivationEmailRepository;
 import com.team44.isa_youtubeich.repository.RoleRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
-import com.team44.isa_youtubeich.service.application.EmailService;
-import com.team44.isa_youtubeich.service.application.UserService;
+import com.team44.isa_youtubeich.repository.VideoRepository;
+import com.team44.isa_youtubeich.service.EmailService;
+import com.team44.isa_youtubeich.service.UserService;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +45,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private VideoRepository videoRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -210,5 +214,26 @@ public class UserServiceImpl implements UserService {
         }
         User user = (User) authentication.getPrincipal();
         return mapToUserResponseDto(user);
+    }
+
+    @Override
+    public UserPublicProfileDto getPublicProfile(String username, Pageable pageable){
+        User user = userRepository.findByUsername(username);
+
+        if(user == null)
+            throw new RuntimeException("User not found");
+
+        Page<VideoHomeDto> videos = videoRepository.findByUserUsernameOrderByCreatedAtDesc(username, pageable)
+                .map(video -> new VideoHomeDto(
+                        video.getId(), video.getTitle(), video.getThumbnailUrl(), video.getViewCount(), video.getLikes(), video.getDislikes(), Date.from(video.getCreatedAt().toInstant()), username)
+                );
+
+        return new UserPublicProfileDto(
+                user.getUsername(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getCreatedAt(),
+                videos
+        );
     }
 }

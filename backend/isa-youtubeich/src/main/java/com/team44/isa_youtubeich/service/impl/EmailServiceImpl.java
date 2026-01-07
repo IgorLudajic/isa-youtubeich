@@ -1,7 +1,7 @@
-package com.team44.isa_youtubeich.service.application.impl;
+package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.User;
-import com.team44.isa_youtubeich.service.application.EmailService;
+import com.team44.isa_youtubeich.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;

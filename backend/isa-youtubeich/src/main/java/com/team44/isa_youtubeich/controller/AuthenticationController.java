@@ -4,7 +4,7 @@ import com.team44.isa_youtubeich.dto.JwtAuthRequestDto;
 import com.team44.isa_youtubeich.dto.SignupRequestDto;
 import com.team44.isa_youtubeich.dto.UserResponseDto;
 import com.team44.isa_youtubeich.dto.UserTokenStateDto;
-import com.team44.isa_youtubeich.service.application.UserService;
+import com.team44.isa_youtubeich.service.UserService;
 import com.team44.isa_youtubeich.util.RateLimited;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
