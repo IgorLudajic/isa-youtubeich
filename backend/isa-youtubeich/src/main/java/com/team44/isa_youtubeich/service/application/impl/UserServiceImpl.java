@@ -201,4 +201,14 @@ public class UserServiceImpl implements UserService {
             });
         }
     }
+
+    @Override
+    public UserResponseDto getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            throw new ValidationException("User not authenticated");
+        }
+        User user = (User) authentication.getPrincipal();
+        return mapToUserResponseDto(user);
+    }
 }

@@ -11,4 +11,6 @@ public interface UserService {
     UserResponseDto signup(SignupRequestDto signupRequest);
 
     void activateAccount(String activationToken);
+
+    UserResponseDto getCurrentUser();
 }
