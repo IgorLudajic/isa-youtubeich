@@ -1,3 +1,3 @@
 export default function Page() {
-  return <div>Welcome to the Main Page!</div>;
+  return <div className="bg-grid h-[80vh]"></div>;
 }
