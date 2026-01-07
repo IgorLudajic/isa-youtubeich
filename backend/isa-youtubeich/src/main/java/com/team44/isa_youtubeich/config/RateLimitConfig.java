@@ -20,4 +20,3 @@ public class RateLimitConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor);
     }
 }
-
