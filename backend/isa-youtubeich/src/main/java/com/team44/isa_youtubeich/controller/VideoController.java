@@ -1,12 +1,10 @@
 package com.team44.isa_youtubeich.controller;
 
 import com.team44.isa_youtubeich.domain.model.Video;
-import com.team44.isa_youtubeich.service.application.VideoService;
+import com.team44.isa_youtubeich.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 

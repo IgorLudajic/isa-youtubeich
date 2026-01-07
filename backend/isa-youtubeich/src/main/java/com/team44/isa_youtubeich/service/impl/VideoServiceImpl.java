@@ -1,10 +1,10 @@
-package com.team44.isa_youtubeich.service.application.impl;
+package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
-import com.team44.isa_youtubeich.service.application.VideoService;
+import com.team44.isa_youtubeich.service.VideoService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,8 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.UUID;
 
 @Service

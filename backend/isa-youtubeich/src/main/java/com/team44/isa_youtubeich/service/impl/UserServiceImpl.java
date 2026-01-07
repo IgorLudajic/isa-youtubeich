@@ -1,4 +1,4 @@
-package com.team44.isa_youtubeich.service.application.impl;
+package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.ActivationEmail;
 import com.team44.isa_youtubeich.domain.model.AddressJson;
@@ -13,8 +13,8 @@ import com.team44.isa_youtubeich.exception.ValidationException;
 import com.team44.isa_youtubeich.repository.ActivationEmailRepository;
 import com.team44.isa_youtubeich.repository.RoleRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
-import com.team44.isa_youtubeich.service.application.EmailService;
-import com.team44.isa_youtubeich.service.application.UserService;
+import com.team44.isa_youtubeich.service.EmailService;
+import com.team44.isa_youtubeich.service.UserService;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;

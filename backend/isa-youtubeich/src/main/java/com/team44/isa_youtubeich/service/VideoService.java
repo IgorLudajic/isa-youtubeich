@@ -1,4 +1,4 @@
-package com.team44.isa_youtubeich.service.application;
+package com.team44.isa_youtubeich.service;
 
 import com.team44.isa_youtubeich.domain.model.Video;
 import org.springframework.web.multipart.MultipartFile;
