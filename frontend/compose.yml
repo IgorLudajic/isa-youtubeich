@@ -8,6 +8,9 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - API_BASE_URL=${API_BASE_URL:-http://app:8080}
+    env_file:
+      - path: ../.env
+        required: false
 
   frontend-dev:
     profiles: [ "dev" ]
@@ -20,4 +23,7 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      - API_BASE_URL=${API_BASE_URL:-http://app:8080}
+      - API_BASE_URL=${API_BASE_URL:-http://app-dev:8080}
+    env_file:
+      - path: ../.env
+        required: false
