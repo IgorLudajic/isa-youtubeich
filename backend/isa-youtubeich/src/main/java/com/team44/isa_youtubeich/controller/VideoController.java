@@ -1,8 +1,12 @@
 package com.team44.isa_youtubeich.controller;
 
 import com.team44.isa_youtubeich.domain.model.Video;
+import com.team44.isa_youtubeich.dto.CommentResponseDto;
+import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,5 +49,15 @@ public class VideoController {
     @GetMapping(value = "/{id}/stream", produces = "video/mp4")
     public ResponseEntity<byte[]> streamVideo(@PathVariable Long id) {
         return ResponseEntity.ok(videoService.getVideoContent(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<VideoHomeDto>> getHomeFeed(Pageable pageable){
+        return ResponseEntity.ok(videoService.getPublicFeed(pageable));
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<Page<CommentResponseDto>> getVideoComments(@PathVariable Long id, Pageable pageable){
+        return ResponseEntity.ok(videoService.getVideoComments(id, pageable));
     }
 }

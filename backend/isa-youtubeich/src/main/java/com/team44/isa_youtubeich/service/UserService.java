@@ -1,9 +1,7 @@
 package com.team44.isa_youtubeich.service;
 
-import com.team44.isa_youtubeich.dto.JwtAuthRequestDto;
-import com.team44.isa_youtubeich.dto.SignupRequestDto;
-import com.team44.isa_youtubeich.dto.UserResponseDto;
-import com.team44.isa_youtubeich.dto.UserTokenStateDto;
+import com.team44.isa_youtubeich.dto.*;
+import org.springframework.data.domain.Pageable;
 
 public interface UserService {
     UserTokenStateDto login(JwtAuthRequestDto authenticationRequest);
@@ -11,4 +9,6 @@ public interface UserService {
     UserResponseDto signup(SignupRequestDto signupRequest);
 
     void activateAccount(String activationToken);
+
+    UserPublicProfileDto getPublicProfile(String username, Pageable pageable);
 }

@@ -2,11 +2,16 @@ package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.domain.model.Video;
+import com.team44.isa_youtubeich.dto.CommentResponseDto;
+import com.team44.isa_youtubeich.dto.VideoHomeDto;
+import com.team44.isa_youtubeich.repository.CommentRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.VideoService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -22,6 +28,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Autowired
     private VideoRepository videoRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -93,6 +102,30 @@ public class VideoServiceImpl implements VideoService {
         } catch (IOException e) {
             throw new RuntimeException("Greška: Ne mogu da pročitam fajl sa lokacije: " + video.getVideoUrl());
         }
+    }
+
+    @Override
+    public Page<VideoHomeDto> getPublicFeed(Pageable pageable){
+        return videoRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(video -> new VideoHomeDto(
+                        video.getId(),
+                        video.getTitle(),
+                        video.getThumbnailUrl(),
+                        video.getViewCount(),
+                        Date.from(video.getCreatedAt().toInstant()),
+                        video.getUser().getUsername()
+                ));
+    }
+
+    @Override
+    public Page<CommentResponseDto> getVideoComments(Long videoId, Pageable pageable){
+        return commentRepository.findByVideoIdOrderByCreatedAtDesc(videoId, pageable)
+                .map(comment -> new CommentResponseDto(
+                        comment.getId(),
+                        comment.getText(),
+                        Date.from(comment.getCreatedAt().toInstant()),
+                        comment.getUser().getUsername()
+                ));
     }
 
     private void createUploadDirectoryIfNotExists() throws IOException {
