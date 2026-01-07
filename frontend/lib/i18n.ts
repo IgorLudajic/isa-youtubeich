@@ -11,9 +11,9 @@ export function declOfNum(
 }
 
 export const i18n = {
-  like: (count: number) =>
+  likes: (count: number) =>
     `${declOfNum(count, ["sviđanje", "sviđanja", "sviđanja"])}`,
-  dislike: (count: number) =>
+  dislikes: (count: number) =>
     `${declOfNum(count, ["nesviđanje", "nesviđanja", "nesviđanja"])}`,
   views: (count: number) =>
     `${declOfNum(count, ["pregled", "pregleda", "pregleda"])}`,
