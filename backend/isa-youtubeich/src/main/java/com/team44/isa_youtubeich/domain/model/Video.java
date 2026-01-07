@@ -21,7 +21,11 @@ public class Video implements Serializable {
     @Getter @Setter
     private Long id;
 
-    // TODO likeCount, dislikeCount (???)
+    @Getter @Setter
+    private Long likes;
+
+    @Getter @Setter
+    private Long dislikes;
 
     @Column(name = "created_at")
     @Getter @Setter

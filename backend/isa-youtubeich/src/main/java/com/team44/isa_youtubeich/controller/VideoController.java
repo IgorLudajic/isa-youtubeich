@@ -55,9 +55,4 @@ public class VideoController {
     public ResponseEntity<Page<VideoHomeDto>> getHomeFeed(Pageable pageable){
         return ResponseEntity.ok(videoService.getPublicFeed(pageable));
     }
-
-    @GetMapping("/{id}/comments")
-    public ResponseEntity<Page<CommentResponseDto>> getVideoComments(@PathVariable Long id, Pageable pageable){
-        return ResponseEntity.ok(videoService.getVideoComments(id, pageable));
-    }
 }

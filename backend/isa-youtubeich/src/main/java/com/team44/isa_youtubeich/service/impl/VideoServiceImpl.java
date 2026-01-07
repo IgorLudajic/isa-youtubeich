@@ -117,17 +117,6 @@ public class VideoServiceImpl implements VideoService {
                 ));
     }
 
-    @Override
-    public Page<CommentResponseDto> getVideoComments(Long videoId, Pageable pageable){
-        return commentRepository.findByVideoIdOrderByCreatedAtDesc(videoId, pageable)
-                .map(comment -> new CommentResponseDto(
-                        comment.getId(),
-                        comment.getText(),
-                        Date.from(comment.getCreatedAt().toInstant()),
-                        comment.getUser().getUsername()
-                ));
-    }
-
     private void createUploadDirectoryIfNotExists() throws IOException {
         Path uploadPath = Paths.get(UPLOAD_DIR);
         if (!Files.exists(uploadPath)) {

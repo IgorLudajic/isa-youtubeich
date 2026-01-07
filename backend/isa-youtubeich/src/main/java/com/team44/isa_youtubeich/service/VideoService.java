@@ -17,6 +17,4 @@ public interface VideoService {
     byte[] getVideoContent(Long id);
 
     Page<VideoHomeDto> getPublicFeed(Pageable pageable);
-
-    Page<CommentResponseDto> getVideoComments(Long videoId, Pageable pageable);
 }
