@@ -65,10 +65,11 @@ export async function getVideoDetails(id: number): Promise<VideoDetailsDto> {
   return res.json();
 }
 
-export async function likeVideo(id: number) {
+export async function likeVideo(id: number, redirectUrl?: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
-  if (!token) redirect("/login");
+  if (!token)
+    redirect(`/login?redir=${encodeURIComponent(redirectUrl || "/")}`);
   const res = await fetch(`${baseUrl}/api/reactions/video/${id}?type=LIKE`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -76,10 +77,11 @@ export async function likeVideo(id: number) {
   if (!res.ok) throw new Error("Failed to like video");
 }
 
-export async function dislikeVideo(id: number) {
+export async function dislikeVideo(id: number, redirectUrl?: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
-  if (!token) redirect("/login");
+  if (!token)
+    redirect(`/login?redir=${encodeURIComponent(redirectUrl || "/")}`);
   const res = await fetch(`${baseUrl}/api/reactions/video/${id}?type=DISLIKE`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -102,10 +104,12 @@ export async function getVideoComments(
 export async function postComment(
   videoId: number,
   text: string,
+  redirectUrl?: string,
 ): Promise<CommentDto> {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
-  if (!token) redirect("/login");
+  if (!token)
+    redirect(`/login?redir=${encodeURIComponent(redirectUrl || "/")}`);
   const res = await fetch(`${baseUrl}/api/comments/video/${videoId}`, {
     method: "POST",
     headers: {

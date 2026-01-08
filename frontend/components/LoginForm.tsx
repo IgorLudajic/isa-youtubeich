@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { login } from "@/lib/auth";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  redirectUrl?: string;
+}
+
+export default function LoginForm({ redirectUrl }: LoginFormProps) {
   const {
     register,
     handleSubmit,
@@ -16,7 +20,7 @@ export default function LoginForm() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await login(data.username, data.password);
+      await login(data.username, data.password, redirectUrl);
       // Redirect or handle success
     } catch (error) {
       if ((error as { message: string }).message === "NEXT_REDIRECT") {

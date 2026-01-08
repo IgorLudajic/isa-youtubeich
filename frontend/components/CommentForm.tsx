@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { postComment } from "@/lib/videofeed";
@@ -14,6 +14,7 @@ export default function CommentForm({ videoId }: CommentFormProps) {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +22,7 @@ export default function CommentForm({ videoId }: CommentFormProps) {
 
     setIsSubmitting(true);
     try {
-      await postComment(videoId, text.trim());
+      await postComment(videoId, text.trim(), pathname);
       setText("");
       router.refresh(); // Re-render the page to show new comment
     } catch (error) {

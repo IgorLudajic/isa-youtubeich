@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThumbsDown, ThumbsUp } from "@carbon/icons-react";
 import { dislikeVideo, likeVideo } from "@/lib/videofeed";
@@ -25,6 +26,8 @@ export default function LikeDislikeButtons({
   const [liked, setLiked] = useState(initialLiked);
   const [disliked, setDisliked] = useState(initialDisliked);
 
+  const pathname = usePathname();
+
   const handleLike = async () => {
     const wasLiked = liked;
     const wasDisliked = disliked;
@@ -45,7 +48,7 @@ export default function LikeDislikeButtons({
     }
 
     try {
-      await likeVideo(videoId);
+      await likeVideo(videoId, pathname);
     } catch (error) {
       // Revert on error
       setLiked(wasLiked);
@@ -76,7 +79,7 @@ export default function LikeDislikeButtons({
     }
 
     try {
-      await dislikeVideo(videoId);
+      await dislikeVideo(videoId, pathname);
     } catch (error) {
       // Revert on error
       setDisliked(wasDisliked);

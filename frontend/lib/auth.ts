@@ -12,7 +12,11 @@ export interface Profile {
   avatarUrl?: string;
 }
 
-export async function login(username: string, password: string): Promise<void> {
+export async function login(
+  username: string,
+  password: string,
+  redirectUrl?: string,
+): Promise<void> {
   const res = await fetch(`${process.env.API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -30,7 +34,7 @@ export async function login(username: string, password: string): Promise<void> {
     httpOnly: true,
   });
 
-  redirect("/");
+  redirect(redirectUrl || "/");
 }
 
 export async function getProfile(): Promise<Profile | null> {
