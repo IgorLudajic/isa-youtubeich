@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ArrowLeft } from "@carbon/icons-react";
 
 export default function GoBack({ className }: { className?: string }) {
   const router = useRouter();
@@ -29,11 +30,11 @@ export default function GoBack({ className }: { className?: string }) {
     <button
       onClick={handleGoBack}
       className={cn(
-        "text-sm cursor-pointer underline-offset-4 decoration-1 hover:underline decoration-wavy text-left pl-2",
+        "text-sm cursor-pointer underline-offset-4 decoration-1 hover:underline decoration-wavy text-left pl-2 flex items-center gap-x-2",
         className,
       )}
     >
-      ← Vrati se
+      <ArrowLeft /> Vrati se
     </button>
   );
 }
