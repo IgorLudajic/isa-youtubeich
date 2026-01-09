@@ -33,7 +33,9 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     @Query("UPDATE Video v SET v.dislikes = v.dislikes - 1 WHERE v.id = :id")
     void decrementDislikes(Long id);
 
-    @Modifying
+
+    // TODO za neka bolja vremena, kad ne bude trebalo stapom i kanapom
+    /*@Modifying
     @Query("UPDATE Video v SET v.viewCount = v.viewCount + 1 WHERE v.id = :id")
-    void incrementViewCount(Long id);
+    void incrementViewCount(Long id);*/
 }

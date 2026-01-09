@@ -130,10 +130,9 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    @Transactional
     public VideoDetailsDto getVideoDetailsAndIncrementViews(Long id, String currentUsername){
 
-        videoRepository.incrementViewCount(id);
+        //videoRepository.incrementViewCount(id);
 
         Video video = videoRepository.findById(id).orElseThrow(() -> new ResourceConflictException(id, "Video not found"));
 
@@ -159,6 +158,11 @@ public class VideoServiceImpl implements VideoService {
                     dto.setDislikedByCurrentUser(true);
             }
         }
+
+        // Umetnuta logika iz metode gore, bez rate limitera
+        video.setViewCount(video.getViewCount() + 1);
+
+        videoRepository.save(video);
 
         return dto;
     }

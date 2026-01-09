@@ -1,9 +1,11 @@
 package com.team44.isa_youtubeich.controller;
 
+import com.team44.isa_youtubeich.dto.CacheablePagedResponse;
 import com.team44.isa_youtubeich.dto.CommentRequestDto;
 import com.team44.isa_youtubeich.dto.CommentResponseDto;
 import com.team44.isa_youtubeich.service.CommentService;
 import jakarta.websocket.server.PathParam;
+import org.hibernate.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +23,7 @@ public class CommentController {
     private CommentService commentService;
 
     @GetMapping("/video/{videoId}")
-    public ResponseEntity<Page<CommentResponseDto>> getVideoComments(@PathVariable Long videoId, Pageable pageable){
+    public ResponseEntity<CacheablePagedResponse<CommentResponseDto>> getVideoComments(@PathVariable Long videoId, Pageable pageable){
         return ResponseEntity.ok(commentService.getVideoComments(videoId, pageable));
     }
 

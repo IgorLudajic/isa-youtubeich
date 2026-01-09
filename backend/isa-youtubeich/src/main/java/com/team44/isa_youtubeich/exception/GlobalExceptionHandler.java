@@ -26,9 +26,10 @@ public class GlobalExceptionHandler {
     private boolean isDevMode() {
         return Arrays.asList(environment.getActiveProfiles()).contains("dev");
     }
+    private boolean isTestMode() { return Arrays.asList(environment.getActiveProfiles()).contains("test"); }
 
     private String getErrorMessage(String opaqueMessage, String detailedMessage) {
-        return isDevMode() ? detailedMessage : opaqueMessage;
+        return isDevMode() || isTestMode() ? detailedMessage : opaqueMessage;
     }
 
     @ExceptionHandler(ValidationException.class)
