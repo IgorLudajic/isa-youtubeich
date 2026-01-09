@@ -13,19 +13,27 @@ public class GeoLocation implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Getter
-    private float latitude;
+    private double latitude;
 
     @Getter
-    private float longitude;
+    private double longitude;
 
-    public void setLatitude(float latitude) throws IllegalArgumentException {
+    public GeoLocation() {
+    }
+
+    public GeoLocation(Double latitude, Double longitude) {
+        setLatitude(latitude);
+        setLongitude(longitude);
+    }
+
+    public void setLatitude(double latitude) throws IllegalArgumentException {
         if(latitude < -90.0 || latitude > 90.0){
             throw new IllegalArgumentException(String.format("Invalid latitude: %f", latitude));
         }
         this.latitude = latitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         if(longitude < -180.0 || longitude > 180.0){
             throw new IllegalArgumentException(String.format("Invalid longitude: %f", longitude));
         }

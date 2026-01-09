@@ -6,8 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -36,4 +39,7 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     @Modifying
     @Query("UPDATE Video v SET v.viewCount = v.viewCount + 1 WHERE v.id = :id")
     void incrementViewCount(Long id);
+
+    @Query("SELECT v FROM Video v WHERE v.premieresAt IS NULL OR v.premieresAt <= :now ORDER BY v.createdAt DESC")
+    Page<Video> findAllReleasedVideos(@Param("now") LocalDateTime now, Pageable pageable);
 }

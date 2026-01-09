@@ -1,9 +1,6 @@
 package com.team44.isa_youtubeich.service.impl;
 
-import com.team44.isa_youtubeich.domain.model.Reaction;
-import com.team44.isa_youtubeich.domain.model.ReactionType;
-import com.team44.isa_youtubeich.domain.model.User;
-import com.team44.isa_youtubeich.domain.model.Video;
+import com.team44.isa_youtubeich.domain.model.*;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
@@ -18,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,6 +24,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.UUID;
+import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
 
 @Service
 public class VideoServiceImpl implements VideoService {
@@ -46,7 +48,7 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Video uploadVideo(String title, String description, MultipartFile videoFile, MultipartFile thumbnailFile, String username) throws IOException {
+    public Video uploadVideo(String title, String description, MultipartFile videoFile, MultipartFile thumbnailFile, String username, List<String> tags, String premieresAt, Double latitude, Double longitude) throws IOException {
 
         if (videoFile == null || videoFile.isEmpty()) {
             throw new RuntimeException("Video fajl je obavezan! Niste izabrali fajl.");
@@ -79,6 +81,21 @@ public class VideoServiceImpl implements VideoService {
             video.setLikes(0L);
             video.setDislikes(0L);
 
+            video.setTags(tags);
+            video.setFileSize(FileSize.of(videoFile.getSize()));
+
+            if (premieresAt != null && !premieresAt.isBlank()) {
+                LocalDateTime localDateTime = LocalDateTime.parse(premieresAt);
+                video.setPremieresAt(localDateTime);
+            } else {
+                video.setPremieresAt(null);
+            }
+            if (latitude != null && longitude != null) {
+                video.setLocation(new GeoLocation(latitude, longitude));
+            } else {
+                video.setLocation(null);
+            }
+
             return videoRepository.save(video);
 
         } catch (Exception e) {
@@ -91,7 +108,7 @@ public class VideoServiceImpl implements VideoService {
             throw e;
         }
     }
-    @Override
+    /*@Override
     public Video getVideoAndIncrementViews(Long id) {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
@@ -99,7 +116,7 @@ public class VideoServiceImpl implements VideoService {
         video.setViewCount(video.getViewCount() + 1);
 
         return videoRepository.save(video);
-    }
+    }*/
 
     @Override
     public byte[] getVideoContent(Long id) {
@@ -116,7 +133,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public Page<VideoHomeDto> getPublicFeed(Pageable pageable){
-        return videoRepository.findAllByOrderByCreatedAtDesc(pageable)
+        LocalDateTime now = LocalDateTime.now();
+
+        return videoRepository.findAllReleasedVideos(now, pageable)
                 .map(video -> new VideoHomeDto(
                         video.getId(),
                         video.getTitle(),
@@ -129,7 +148,7 @@ public class VideoServiceImpl implements VideoService {
                 ));
     }
 
-    @Override
+   /* @Override
     @Transactional
     public VideoDetailsDto getVideoDetailsAndIncrementViews(Long id, String currentUsername){
 
@@ -161,6 +180,43 @@ public class VideoServiceImpl implements VideoService {
         }
 
         return dto;
+    }*/
+
+    @Override
+    public VideoDetailsDto getVideoDetails(Long id, String currentUsername){
+
+        Video video = videoRepository.findById(id).orElseThrow(() -> new ResourceConflictException(id, "Video not found"));
+
+        VideoDetailsDto dto = new VideoDetailsDto(
+                video.getId(),
+                video.getTitle(),
+                video.getThumbnailUrl(),
+                video.getViewCount(),
+                video.getLikes(),
+                video.getDislikes(),
+                false,
+                false,
+                Date.from(video.getCreatedAt().toInstant()),
+                video.getUser().getUsername()
+        );
+
+        if(currentUsername != null){
+            Reaction reaction = reactionRepository.findByVideoIdAndUserUsername(id, currentUsername);
+            if(reaction != null){
+                if(reaction.getType() == ReactionType.LIKE)
+                    dto.setLikedByCurrentUser(true);
+                else
+                    dto.setDislikedByCurrentUser(true);
+            }
+        }
+
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public void incrementViews(Long id) {
+        videoRepository.incrementViewCount(id);
     }
 
     private void createUploadDirectoryIfNotExists() throws IOException {
@@ -179,5 +235,21 @@ public class VideoServiceImpl implements VideoService {
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         return filePath.toString();
+    }
+
+    @Override
+    @Cacheable("thumbnails")
+    public byte[] getThumbnailContent(Long id) {
+        System.out.println("DISK OPERACIJA: Učitavam sliku " + id + " sa hard diska...");
+
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
+
+        try {
+            Path path = Paths.get(video.getThumbnailUrl());
+            return Files.readAllBytes(path);
+        } catch (IOException e) {
+            throw new RuntimeException("Greška pri čitanju thumbnail-a: " + video.getThumbnailUrl());
+        }
     }
 }

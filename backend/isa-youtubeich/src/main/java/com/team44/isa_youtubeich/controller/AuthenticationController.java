@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/auth", produces = MediaType.APPLICATION_JSON_VALUE)
-@RateLimited(key = "auth", limit = 5, windowSeconds = 60)
 public class AuthenticationController {
 
     @Autowired
     private UserService userService;
 
+    @RateLimited(key = "auth", limit = 5, windowSeconds = 60)
     @PostMapping("/login")
     public ResponseEntity<UserTokenStateDto> createAuthenticationToken(
             @RequestBody JwtAuthRequestDto authenticationRequest) {
@@ -28,6 +28,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(tokenState);
     }
 
+    @RateLimited(key = "auth", limit = 5, windowSeconds = 60)
     @PostMapping("/signup")
     public ResponseEntity<UserResponseDto> signup(@Valid @RequestBody SignupRequestDto signupRequest) {
         UserResponseDto user = userService.signup(signupRequest);

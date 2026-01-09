@@ -48,7 +48,7 @@ public class Video implements Serializable {
 
     @Column(name = "premieres_at")
     @Getter @Setter
-    private Timestamp premieresAt;
+    private LocalDateTime premieresAt;
 
     @Embedded
     @Column(name = "file_size")
@@ -67,6 +67,14 @@ public class Video implements Serializable {
     @Column(name = "thumbnail_url")
     @Getter @Setter
     private String thumbnailUrl;
+
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "latitude", column = @Column(name = "latitude")),
+            @AttributeOverride(name = "longitude", column = @Column(name = "longitude"))
+    })
+    @Getter @Setter
+    private GeoLocation location;
 
     @PrePersist
     protected void onCreate() {
