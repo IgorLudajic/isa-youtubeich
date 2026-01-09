@@ -12,11 +12,17 @@ import { getProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import GoBack from "@/components/GoBack";
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ redir?: string }>;
+}) {
   const profile = await getProfile();
   if (profile) {
     redirect("/");
   }
+
+  const { redir } = await searchParams;
 
   return (
     <div className="grow-1 flex flex-col justify-center items-center h-full">
@@ -30,7 +36,7 @@ export default async function Page() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            <LoginForm redirectUrl={redir} />
           </CardContent>
           <CardFooter className="flex-col gap-2">
             <div className="mt-4 text-center text-sm">

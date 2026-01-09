@@ -65,6 +65,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
 
                 // TODO prosiriti po potrebi
 

@@ -12,7 +12,7 @@
   --border: oklch(0% 0 0);
   --ring: oklch(0% 0 0);
   --overlay: oklch(0% 0 0 / 0.8);
-  --shadow: 2px 0px 0px 0px var(--border);
+  --shadow: 1px 1px 0px 0px var(--border);
   --chart-1: #8AE500;
   --chart-2: #0099FF;
   --chart-3: #FF4D50;
@@ -29,7 +29,7 @@
   --main: oklch(76.26% 0.21309 132.4002);
   --border: oklch(0% 0 0);
   --ring: oklch(100% 0 0);
-  --shadow: 2px 0px 0px 0px var(--border);
+  --shadow: 1px 1px 0px 0px var(--border);
   --chart-1: #7ACC00;
   --chart-2: #008AE5;
   --chart-3: #FF6669;
@@ -53,10 +53,10 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  --spacing-boxShadowX: 2px;
-  --spacing-boxShadowY: 0px;
-  --spacing-reverseBoxShadowX: -2px;
-  --spacing-reverseBoxShadowY: -0px;
+  --spacing-boxShadowX: 1px;
+  --spacing-boxShadowY: 1px;
+  --spacing-reverseBoxShadowX: -1px;
+  --spacing-reverseBoxShadowY: -1px;
   --radius-base: 5px;
   --shadow-shadow: var(--shadow);
   --font-weight-base: 500;
@@ -72,9 +72,14 @@
     @apply font-heading;
   }
 }
-
 @layer utilities {
   .bg-grid {
     @apply bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px];
   }
+}
+
+/*noinspection ALL*/
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-plex-mono);
 }
