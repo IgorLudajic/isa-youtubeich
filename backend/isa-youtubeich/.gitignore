@@ -31,9 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
-/uploads/1e6adaed-d731-4e62-8e40-45e024bbe881_490610_001.webp
-/uploads/3a8380ae-1e01-4995-b363-9655970dabbe_cute-little-kitten-wings-260nw-14125273.webp
-/uploads/4e762d3a-7a55-448a-80eb-a59f1d323de1_490610_001.webp
-/uploads/5001b7e1-7c00-4c82-a949-e7aff9dfd7a0_Screencast from 2025-03-14 18-22-38.webm
-/uploads/ab79cd7e-8419-4dd5-b74b-cfecc9f4d3a2_Screencast from 2025-03-14 18-22-38.webm
-/uploads/e0b62954-d2d6-41ee-9b93-c18250091cb4_Screencast from 2025-03-14 18-22-38.webm
+/uploads/**
