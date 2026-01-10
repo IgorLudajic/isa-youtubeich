@@ -5,6 +5,7 @@ import LikeDislikeButtons from "@/components/LikeDislikeButtons";
 import CommentsList from "@/components/CommentsList";
 import ViewTracker from "@/components/ViewTracker";
 import { i18n } from "@/lib/i18n";
+import Link from "next/link";
 
 export default async function VideoPage({
   params,
@@ -55,12 +56,12 @@ export default async function VideoPage({
           </div>
 
           <div className="flex items-start justify-between mb-4">
-            <a
-              href="#"
-              className="text-lime-700 font-mono font-[600] hover:underline"
+            <Link 
+                href={`/profiles/${video.creatorUsername}`}
+                className="text-lime-700 font-mono font-[600] hover:underline"
             >
-              @{video.creatorUsername}
-            </a>
+                @{video.creatorUsername}
+            </Link>
             <div className="flex gap-2 text-sm pt-2">
               <LikeDislikeButtons
                 videoId={id}

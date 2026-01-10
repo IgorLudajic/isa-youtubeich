@@ -3,6 +3,7 @@ import { getVideoComments } from "@/lib/videofeed";
 import CommentForm from "./CommentForm";
 import CommentsPagination from "./CommentsPagination";
 import CommentsSkeleton from "./CommentsSkeleton";
+import Link from "next/link";
 
 interface CommentsListOnlyProps {
   videoId: number;
@@ -25,7 +26,12 @@ async function CommentsListOnly({ videoId, page }: CommentsListOnlyProps) {
             </div>
             <div className="flex-1 -mt-1">
               <div className="flex items-baseline gap-2">
-                <span className="font-semibold">{comment.username}</span>
+                <Link 
+                  href={`/profiles/${comment.username}`} 
+                  className="font-semibold hover:underline decoration-2 underline-offset-4"
+                >
+                  {comment.username}
+                </Link>
                 <span className="text-sm text-gray-500">
                   {new Date(comment.createdAt).toLocaleDateString()}
                 </span>
