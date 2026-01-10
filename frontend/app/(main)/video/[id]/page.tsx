@@ -3,6 +3,7 @@ import { getFullUrl } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import LikeDislikeButtons from "@/components/LikeDislikeButtons";
 import CommentsList from "@/components/CommentsList";
+import ViewTracker from "@/components/ViewTracker";
 import { i18n } from "@/lib/i18n";
 
 export default async function VideoPage({
@@ -29,6 +30,7 @@ export default async function VideoPage({
 
   return (
     <div className="min-h-screen bg-background bg-grid p-4 md:p-8">
+      <ViewTracker videoId={id} />
       <div className="max-w-4xl mx-auto">
         <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative z-10">
           <video
