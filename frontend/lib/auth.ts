@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 export interface Profile {
   id?: string;
@@ -32,8 +33,10 @@ export async function login(
   cookieStore.set("token", accessToken, {
     maxAge: expiresIn / 1000,
     httpOnly: true,
+    path: "/",
   });
 
+  revalidatePath("/", "layout");
   redirect(redirectUrl || "/");
 }
 

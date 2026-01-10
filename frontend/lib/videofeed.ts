@@ -121,3 +121,31 @@ export async function postComment(
   if (!res.ok) throw new Error("Failed to post comment");
   return res.json();
 }
+
+export async function uploadVideo(formData: FormData): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+
+  if (!token) {
+    redirect("/login");
+  }
+
+  const res = await fetch(`${baseUrl}/api/videos`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "Video upload failed");
+  }
+}
+
+export async function viewVideo(id: number): Promise<void> {
+  await fetch(`${baseUrl}/api/videos/${id}/view`, {
+    method: "POST",
+  });
+}
