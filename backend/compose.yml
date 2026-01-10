@@ -70,7 +70,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
   redis:
     image: redis:8-alpine
     restart: unless-stopped

@@ -13,6 +13,7 @@ interface CommentFormProps {
 export default function CommentForm({ videoId }: CommentFormProps) {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Added error state
   const router = useRouter();
   const pathname = usePathname();
 
@@ -21,13 +22,15 @@ export default function CommentForm({ videoId }: CommentFormProps) {
     if (!text.trim()) return;
 
     setIsSubmitting(true);
+    setError(null); // Reset error on new attempt
+    
     try {
       await postComment(videoId, text.trim(), pathname);
       setText("");
-      router.refresh(); // Re-render the page to show new comment
-    } catch (error) {
-      console.error("Failed to post comment", error);
-      // TODO: show error message
+      router.refresh(); 
+    } catch (err: any) {
+      console.error("Failed to post comment", err);
+      setError("You have exceeded the limit of 60 comments per hour."); 
     } finally {
       setIsSubmitting(false);
     }
@@ -38,11 +41,21 @@ export default function CommentForm({ videoId }: CommentFormProps) {
       <Textarea
         placeholder="Dodaj komentar..."
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          if (error) setError(null);
+        }}
         className="min-h-[80px]"
       />
+      
+      {error && (
+        <p className="text-sm font-medium text-destructive bg-destructive/10 p-2 rounded-base border-2 border-destructive">
+          {error}
+        </p>
+      )}
+
       <Button type="submit" disabled={isSubmitting || !text.trim()}>
-        Objavi
+        {isSubmitting ? "Objavljivanje..." : "Objavi"}
       </Button>
     </form>
   );

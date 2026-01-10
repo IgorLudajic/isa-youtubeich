@@ -24,7 +24,7 @@ export default function CommentsPagination({
   const router = useRouter();
 
   const handlePageChange = (page: number) => {
-    router.push(`/main/video/${videoId}?commentPage=${page}`);
+    router.push(`/video/${videoId}?commentPage=${page}`);
   };
 
   if (totalPages <= 1) return null;
