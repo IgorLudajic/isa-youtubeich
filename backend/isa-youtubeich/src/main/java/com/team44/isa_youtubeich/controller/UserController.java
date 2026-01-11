@@ -18,7 +18,7 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/{username}/profile")
-    public ResponseEntity<UserPublicProfileDto> getProfile(@PathVariable String username, @PageableDefault(size = 12) Pageable pageable){
+    public ResponseEntity<UserPublicProfileDto> getProfile(@PathVariable String username, @PageableDefault(size = 10) Pageable pageable){
         return ResponseEntity.ok(userService.getPublicProfile(username, pageable));
     }
 }

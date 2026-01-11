@@ -232,6 +232,7 @@ public class UserServiceImpl implements UserService {
                 user.getUsername(),
                 user.getFirstName(),
                 user.getLastName(),
+                user.getEmail(),
                 user.getCreatedAt(),
                 videos
         );
