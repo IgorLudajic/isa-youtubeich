@@ -52,11 +52,6 @@ public class VideoController {
         return ResponseEntity.ok(videoService.getPublicFeed(pageable));
     }
 
-    /*@GetMapping("/{id}")
-    public ResponseEntity<VideoDetailsDto> getVideoInfo(@PathVariable Long id, Principal principal){
-        String username = (principal != null) ? principal.getName() : null;
-        return ResponseEntity.ok(videoService.getVideoDetailsAndIncrementViews(id, username));
-    }*/
 
     @GetMapping("/{id}")
     public ResponseEntity<VideoDetailsDto> getVideoInfo(@PathVariable Long id, Principal principal){
@@ -64,7 +59,6 @@ public class VideoController {
         return ResponseEntity.ok(videoService.getVideoDetails(id, username));
     }
 
-    // Novi endpoint koji frontend gađa samo jednom za View Count
     @PostMapping("/{id}/view")
     public ResponseEntity<Void> viewVideo(@PathVariable Long id) {
         videoService.incrementViews(id);
