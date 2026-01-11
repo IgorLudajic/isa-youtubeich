@@ -46,6 +46,8 @@ public class VideoServiceImpl implements VideoService {
 
     private final String UPLOAD_DIR = "uploads/";
 
+    private final String API_BASE_URL = "http://localhost:8080/api/videos";
+
     @Override
     @Transactional(rollbackOn = Exception.class)
     public Video uploadVideo(String title, String description, MultipartFile videoFile, MultipartFile thumbnailFile, String username, List<String> tags, String premieresAt, Double latitude, Double longitude) throws IOException {
@@ -108,15 +110,6 @@ public class VideoServiceImpl implements VideoService {
             throw e;
         }
     }
-    /*@Override
-    public Video getVideoAndIncrementViews(Long id) {
-        Video video = videoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
-
-        video.setViewCount(video.getViewCount() + 1);
-
-        return videoRepository.save(video);
-    }*/
 
     @Override
     public byte[] getVideoContent(Long id) {
@@ -139,7 +132,8 @@ public class VideoServiceImpl implements VideoService {
                 .map(video -> new VideoHomeDto(
                         video.getId(),
                         video.getTitle(),
-                        video.getThumbnailUrl(),
+                        // IZMENA: Vraćamo URL ka kontroleru, ne putanju sa diska!
+                        API_BASE_URL + "/" + video.getId() + "/thumbnail",
                         video.getViewCount(),
                         video.getLikes(),
                         video.getDislikes(),
@@ -147,40 +141,6 @@ public class VideoServiceImpl implements VideoService {
                         video.getUser().getUsername()
                 ));
     }
-
-   /* @Override
-    @Transactional
-    public VideoDetailsDto getVideoDetailsAndIncrementViews(Long id, String currentUsername){
-
-        videoRepository.incrementViewCount(id);
-
-        Video video = videoRepository.findById(id).orElseThrow(() -> new ResourceConflictException(id, "Video not found"));
-
-        VideoDetailsDto dto = new VideoDetailsDto(
-                video.getId(),
-                video.getTitle(),
-                video.getThumbnailUrl(),
-                video.getViewCount(),
-                video.getLikes(),
-                video.getDislikes(),
-                false,
-                false,
-                Date.from(video.getCreatedAt().toInstant()),
-                video.getUser().getUsername()
-        );
-
-        if(currentUsername != null){
-            Reaction reaction = reactionRepository.findByVideoIdAndUserUsername(id, currentUsername);
-            if(reaction != null){
-                if(reaction.getType() == ReactionType.LIKE)
-                    dto.setLikedByCurrentUser(true);
-                else
-                    dto.setDislikedByCurrentUser(true);
-            }
-        }
-
-        return dto;
-    }*/
 
     @Override
     public VideoDetailsDto getVideoDetails(Long id, String currentUsername){
@@ -190,7 +150,8 @@ public class VideoServiceImpl implements VideoService {
         VideoDetailsDto dto = new VideoDetailsDto(
                 video.getId(),
                 video.getTitle(),
-                video.getThumbnailUrl(),
+                // IZMENA: Vraćamo URL ka kontroleru
+                API_BASE_URL + "/" + video.getId() + "/thumbnail",
                 video.getViewCount(),
                 video.getLikes(),
                 video.getDislikes(),
@@ -214,9 +175,13 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    @Transactional
-    public void incrementViews(Long id) {
-        videoRepository.incrementViewCount(id);
+    public synchronized void incrementViews(Long id) {
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
+
+        video.setViewCount(video.getViewCount() + 1);
+
+        videoRepository.save(video);
     }
 
     private void createUploadDirectoryIfNotExists() throws IOException {
@@ -240,7 +205,7 @@ public class VideoServiceImpl implements VideoService {
     @Override
     @Cacheable("thumbnails")
     public byte[] getThumbnailContent(Long id) {
-        System.out.println("DISK OPERACIJA: Učitavam sliku " + id + " sa hard diska...");
+        // System.out.println("DISK OPERACIJA: Učitavam sliku " + id + " sa hard diska...");
 
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
