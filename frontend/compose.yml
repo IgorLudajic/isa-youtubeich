@@ -1,0 +1,29 @@
+services:
+  frontend:
+    profiles: [ "prod" ]
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-http://app:8080}
+    env_file:
+      - path: ../.env
+        required: false
+
+  frontend-dev:
+    profiles: [ "dev" ]
+    image: oven/bun:latest
+    working_dir: /workspace
+    command: >-
+      sh -c "bun install && bun run dev"
+    volumes:
+      - ./:/workspace
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-http://app-dev:8080}
+    env_file:
+      - path: ../.env
+        required: false
