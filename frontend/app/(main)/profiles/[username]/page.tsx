@@ -1,7 +1,8 @@
-import { getPublicProfile } from "@/lib/profile";
+import { getPublicProfile, UserPublicProfileDto } from "@/lib/profile";
 import { notFound } from "next/navigation";
 import VideoCard from "@/components/VideoCard";
 import HomeFeedPagination from "@/components/HomeFeedPagination";
+import ProfileAvatar from "@/components/ProfileAvatar";
 
 export default async function ProfilePage({
   params,
@@ -21,14 +22,29 @@ export default async function ProfilePage({
     notFound();
   }
 
+  const adaptProfile = (profile: UserPublicProfileDto) => ({
+    name: profile.firstName,
+    surname: profile.lastName,
+    avatarUrl: undefined,
+  });
+
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-12">
-      <section className="space-y-2">
-        <h1 className="text-4xl font-heading">@{profile.username}</h1>
+    <div className="container mx-auto space-y-12">
+      <section className="space-y-2 p-4 rounded-base border-border border-2 bg-background">
         <div className="flex flex-col text-lg font-medium">
-          <span>
-            {profile.firstName} {profile.lastName}
-          </span>
+          <div className="flex gap-4 items-center mb-2">
+            <ProfileAvatar
+              className="size-13"
+              profile={adaptProfile(profile)}
+            />
+            <div className="flex flex-col">
+              <span className="text-2xl font-heading">
+                {profile.firstName} {profile.lastName}
+              </span>
+              <span className="font-mono">@{profile.username}</span>
+            </div>
+          </div>
+
           <span className="text-stone-600">{profile.email}</span>
           <span className="text-stone-500 text-sm mt-1">
             Member since {new Date(profile.createdAt).toLocaleDateString()}
@@ -36,14 +52,8 @@ export default async function ProfilePage({
         </div>
       </section>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-[100vw] relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] border-t-4 border-black"></div>
-        </div>
-      </div>
-
-      <div className="space-y-8 pt-4">
-        <h2 className="text-2xl font-heading">Videos</h2>
+      <div className="space-y-8 p-4 bg-background shadow-background shadow-[0_20px_50px_50px]">
+        <h2 className="text-xl font-heading">Videos</h2>
 
         {profile.videos.content.length > 0 ? (
           <>
