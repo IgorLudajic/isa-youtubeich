@@ -29,7 +29,7 @@ export default async function ProfilePage({
   });
 
   return (
-    <div className="container mx-auto space-y-12">
+    <div className="container mx-auto">
       <section className="space-y-2 p-4 rounded-base border-border border-2 bg-background">
         <div className="flex flex-col text-lg font-medium">
           <div className="flex gap-4 items-center mb-2">
@@ -38,22 +38,22 @@ export default async function ProfilePage({
               profile={adaptProfile(profile)}
             />
             <div className="flex flex-col">
-              <span className="text-2xl font-heading">
+              <span className="text-xl font-heading">
                 {profile.firstName} {profile.lastName}
               </span>
               <span className="font-mono">@{profile.username}</span>
             </div>
           </div>
 
-          <span className="text-stone-600">{profile.email}</span>
+          <span className="text-stone-600 font-mono">{profile.email}</span>
           <span className="text-stone-500 text-sm mt-1">
-            Member since {new Date(profile.createdAt).toLocaleDateString()}
+            Član od {new Date(profile.createdAt).toLocaleDateString()}
           </span>
         </div>
       </section>
 
-      <div className="space-y-8 p-4 bg-background shadow-background shadow-[0_20px_50px_50px]">
-        <h2 className="text-xl font-heading">Videos</h2>
+      <div className="mt-8 p-4 bg-background shadow-background shadow-[0_20px_50px_50px] rounded-full">
+        <h2 className="text-lg font-heading mb-4 select-none">Video snimci</h2>
 
         {profile.videos.content.length > 0 ? (
           <>
@@ -69,8 +69,8 @@ export default async function ProfilePage({
             />
           </>
         ) : (
-          <p className="text-stone-500 italic">
-            This user has no published videos.
+          <p className="text-stone-500 text-sm text-center select-none">
+            Korisnik nije objavio nijedan snimak.
           </p>
         )}
       </div>
