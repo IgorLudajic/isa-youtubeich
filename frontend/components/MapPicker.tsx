@@ -1,13 +1,13 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useEffect } from "react";
 
 const icon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -30,13 +30,21 @@ function LocationMarker({ position, onLocationSelect }: MapPickerProps) {
   );
 }
 
-export default function MapPicker({ position, onLocationSelect }: MapPickerProps) {
+export default function MapPicker({
+  position,
+  onLocationSelect,
+}: MapPickerProps) {
   return (
     <MapContainer
       center={[44.7866, 20.4489]}
       zoom={13}
       scrollWheelZoom={true}
-      style={{ height: "300px", width: "100%", borderRadius: "12px", zIndex: 0 }}
+      style={{
+        height: "300px",
+        width: "100%",
+        borderRadius: "12px",
+        zIndex: 0,
+      }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

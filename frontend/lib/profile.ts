@@ -13,10 +13,14 @@ export interface UserPublicProfileDto {
   videos: Page<VideoHomeDto>;
 }
 
-export async function getPublicProfile(username: string, page: number = 0, size: number = 10) : Promise<UserPublicProfileDto> {
+export async function getPublicProfile(
+  username: string,
+  page: number = 0,
+  size: number = 10,
+): Promise<UserPublicProfileDto> {
   const res = await fetch(
-    `${baseUrl}/api/users/${username}/profile?page=${page}&size=${size}`
+    `${baseUrl}/api/users/${username}/profile?page=${page}&size=${size}`,
   );
-  if(!res.ok) throw new Error("Failed to fetch public profile");
+  if (!res.ok) throw new Error("Failed to fetch public profile");
   return res.json();
 }

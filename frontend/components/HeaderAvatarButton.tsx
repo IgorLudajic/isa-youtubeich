@@ -34,7 +34,7 @@ export default async function HeaderAvatarButton() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link 
+            <Link
               href={`/profiles/${profile.username}`}
               className="w-full flex items-center cursor-pointer gap-2"
             >
@@ -42,13 +42,13 @@ export default async function HeaderAvatarButton() {
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        
+
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <form method="post" action="/logout">
             <DropdownMenuItem
               asChild
-              className="bg-background hover:bg-red-600/50 hover:border-red-600 bg-red-400/60 border-black"
+              className="hover:bg-red-600/50 hover:border-red-600 bg-red-400/60 border-black"
             >
               <button
                 type="submit"

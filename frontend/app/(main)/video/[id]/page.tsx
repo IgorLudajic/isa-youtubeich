@@ -25,7 +25,7 @@ export default async function VideoPage({
   let video;
   try {
     video = await getVideoDetails(id);
-  } catch (error) {
+  } catch {
     notFound();
   }
 
@@ -56,11 +56,11 @@ export default async function VideoPage({
           </div>
 
           <div className="flex items-start justify-between mb-4">
-            <Link 
-                href={`/profiles/${video.creatorUsername}`}
-                className="text-lime-700 font-mono font-[600] hover:underline"
+            <Link
+              href={`/profiles/${video.creatorUsername}`}
+              className="text-lime-700 font-mono font-[600] hover:underline"
             >
-                @{video.creatorUsername}
+              @{video.creatorUsername}
             </Link>
             <div className="flex gap-2 text-sm pt-2">
               <LikeDislikeButtons
