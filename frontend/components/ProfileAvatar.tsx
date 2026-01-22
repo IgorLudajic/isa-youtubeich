@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface ProfileAvatarProps {
   profile: {
@@ -14,7 +15,7 @@ export default function ProfileAvatar({
   className,
 }: ProfileAvatarProps) {
   return (
-    <Avatar className={className}>
+    <Avatar className={cn("select-none", className)}>
       <AvatarImage src={profile.avatarUrl} alt={profile.name} />
       <AvatarFallback>
         {profile.name.charAt(0).toUpperCase() +
