@@ -15,12 +15,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { uploadVideo } from "@/lib/videofeed";
-import { Calendar, Location, Tag } from "@carbon/icons-react";
+import {
+  Calendar,
+  Close,
+  DocumentVideo,
+  Location,
+  Tag,
+  Thumbnail_1,
+} from "@carbon/icons-react";
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), {
   ssr: false,
   loading: () => (
-    <div className="h-75 w-full bg-gray-100 rounded-xl flex items-center justify-center text-gray-500 animate-pulse">
+    <div className="max-h-100 aspect-[1.5] w-full bg-gray-100 text-gray-500 animate-pulse rounded-base border-border border-2 flex items-center justify-center">
       Učitavanje mape...
     </div>
   ),
@@ -68,7 +75,7 @@ export default function UploadForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto my-8 shadow-lg">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           Postavi novi video
@@ -78,10 +85,10 @@ export default function UploadForm() {
         </CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
+      <CardContent>
+        <form id="uploadForm" onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="title" className="font-bold">
+            <Label htmlFor="title" className="font-bold ml-px">
               Naslov videa
             </Label>
             <Input
@@ -94,7 +101,7 @@ export default function UploadForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="font-bold">
+            <Label htmlFor="description" className="font-bold ml-px">
               Opis
             </Label>
             <Textarea
@@ -111,7 +118,7 @@ export default function UploadForm() {
             <div className="space-y-2">
               <Label
                 htmlFor="tags"
-                className="flex items-center gap-2 font-bold"
+                className="flex items-center gap-1 font-bold ml-px"
               >
                 <Tag /> Tagovi
               </Label>
@@ -127,7 +134,7 @@ export default function UploadForm() {
             <div className="space-y-2">
               <Label
                 htmlFor="premieresAt"
-                className="flex items-center gap-2 font-bold"
+                className="flex items-center gap-1 font-bold ml-px"
               >
                 <Calendar /> Premijera (Opciono)
               </Label>
@@ -144,35 +151,32 @@ export default function UploadForm() {
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-2 font-bold">
+            <Label className="flex items-center gap-1 font-bold ml-px">
               <Location /> Lokacija snimanja (Opciono)
             </Label>
 
-            <div className="border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm">
-              <MapPicker
-                position={location}
-                onLocationSelect={(lat, lng) => setLocation({ lat, lng })}
-              />
-            </div>
+            <MapPicker
+              position={location}
+              onLocationSelect={(lat, lng) => setLocation({ lat, lng })}
+            />
 
             {location ? (
-              <div className="flex items-center justify-between text-sm bg-green-50 text-green-700 p-2 rounded-md border border-green-200">
-                <span>
-                  {" "}
-                  Odabrano: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                </span>
-                <Button
-                  type="button"
-                  variant="neutral"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-auto py-0"
+              <div className="flex items-center justify-between text-sm text-lime-800 bg-lime-100 p-2 rounded-base border-2 border-border rounded-t-none -mt-3 z-1 relative">
+                <div>
+                  <span className="font-bold mr-1">Odabrano:</span>
+                  <span>
+                    {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                  </span>
+                </div>
+                <button
+                  className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border-[1.5px] border-red-600 rounded-full cursor-pointer"
                   onClick={() => setLocation(null)}
                 >
-                  Ukloni
-                </Button>
+                  <Close />
+                </button>
               </div>
             ) : (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 ml-px">
                 Kliknite na mapu da označite lokaciju.
               </p>
             )}
@@ -180,7 +184,11 @@ export default function UploadForm() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="videoFile" className="font-bold">
+              <Label
+                htmlFor="videoFile"
+                className="flex items-center gap-1 font-bold ml-px"
+              >
+                <DocumentVideo />
                 Video fajl (MP4)
               </Label>
               <Input
@@ -195,7 +203,11 @@ export default function UploadForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="thumbnailFile" className="font-bold">
+              <Label
+                htmlFor="thumbnailFile"
+                className="flex items-center gap-1 font-bold ml-px"
+              >
+                <Thumbnail_1 />
                 Sličica (Thumbnail)
               </Label>
               <Input
@@ -216,18 +228,19 @@ export default function UploadForm() {
               <p>{error}</p>
             </div>
           )}
-        </CardContent>
-        <CardFooter className="flex justify-end pt-2 pb-6 px-6">
-          <Button
-            type="submit"
-            size="lg"
-            disabled={isSubmitting}
-            className="w-full md:w-auto font-bold"
-          >
-            {isSubmitting ? "Postavljanje..." : "Objavi Video"}
-          </Button>
-        </CardFooter>
-      </form>
+        </form>
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button
+          type="submit"
+          form="uploadForm"
+          size="lg"
+          disabled={isSubmitting}
+          className="w-full md:w-auto font-bold"
+        >
+          Objavi video
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
