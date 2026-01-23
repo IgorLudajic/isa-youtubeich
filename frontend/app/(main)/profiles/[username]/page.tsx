@@ -52,8 +52,10 @@ export default async function ProfilePage({
         </div>
       </section>
 
-      <div className="mt-8 p-4 bg-background shadow-background shadow-[0_20px_50px_50px] rounded-full">
-        <h2 className="text-lg font-heading mb-4 select-none">Video snimci</h2>
+      <div className="mt-8 py-4 bg-background shadow-background shadow-[0_20px_50px_50px] rounded-4xl">
+        <h2 className="text-lg ml-2 font-heading mb-4 select-none">
+          Video snimci
+        </h2>
 
         {profile.videos.content.length > 0 ? (
           <>
