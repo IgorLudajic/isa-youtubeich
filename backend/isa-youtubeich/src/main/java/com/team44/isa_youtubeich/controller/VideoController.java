@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -60,8 +59,9 @@ public class VideoController {
     }
 
     @PostMapping("/{id}/view")
-    public ResponseEntity<Void> viewVideo(@PathVariable Long id) {
-        videoService.incrementViews(id);
+    public ResponseEntity<Void> viewVideo(@PathVariable Long id, Principal principal) {
+        String username = (principal != null) ? principal.getName() : null;
+        videoService.enqueueView(id, username);
         return ResponseEntity.ok().build();
     }
 
