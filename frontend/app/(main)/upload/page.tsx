@@ -10,7 +10,7 @@ export default async function UploadPage() {
   }
 
   return (
-    <div className="min-h-[80vh] bg-grid p-4 md:p-8 flex items-center justify-center">
+    <div className="mx-auto flex items-center justify-center max-w-screen-xl">
       <UploadForm />
     </div>
   );

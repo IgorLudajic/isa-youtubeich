@@ -39,12 +39,7 @@ export default function MapPicker({
       center={[44.7866, 20.4489]}
       zoom={13}
       scrollWheelZoom={true}
-      style={{
-        height: "300px",
-        width: "100%",
-        borderRadius: "12px",
-        zIndex: 0,
-      }}
+      className="w-full max-h-100 aspect-[1.5] rounded-base border-2 border-border z-0"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

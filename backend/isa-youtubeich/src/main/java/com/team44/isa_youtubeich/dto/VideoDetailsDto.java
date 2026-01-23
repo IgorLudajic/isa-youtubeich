@@ -12,6 +12,7 @@ import java.util.Date;
 public class VideoDetailsDto {
     private Long Id;
     private String title;
+    private String description;
     private String thumbnailUrl;
     private Long viewCount;
     private Long likes;

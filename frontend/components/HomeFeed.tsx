@@ -12,7 +12,7 @@ export default async function HomeFeed({ page = 0, size = 10 }: HomeFeedProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 homefeed-grid md:mx-0! md:flex flex-wrap">
+      <div className="grid grid-cols-1 gap-6 homefeed-grid md:mx-0! md:flex flex-wrap bg-background shadow-background shadow-[0_0_50px_70px] rounded-full">
         {feed.content.map((video) => (
           <VideoCard key={video.Id} video={video} />
         ))}

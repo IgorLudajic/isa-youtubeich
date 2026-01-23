@@ -60,6 +60,7 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
             <Label htmlFor="password">Lozinka</Label>
             <a
               href="#"
+              tabIndex={-1}
               className="ml-auto inline-block text-sm underline-offset-4 hover:underline text-emerald-700"
             >
               Zaboravili ste lozinku?

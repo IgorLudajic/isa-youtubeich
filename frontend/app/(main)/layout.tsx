@@ -9,7 +9,7 @@ export default function MainLayout({
   return (
     <>
       <Header />
-      {children}
+      <div className="bg-grid min-h-[80vh] p-4 md:p-8">{children}</div>
       <Footer />
     </>
   );
