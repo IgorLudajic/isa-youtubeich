@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend Debug" type="CompoundRunConfigurationType">
+    <toRun name="Backend (dev)" type="docker-deploy" />
+    <toRun name="Backend Docker" type="Remote" />
+    <method v="2" />
+  </configuration>
+</component>

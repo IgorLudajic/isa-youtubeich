@@ -17,7 +17,7 @@ export default async function ProfilePage({
   let profile;
   try {
     profile = await getPublicProfile(username, page, 10);
-  } catch (error) {
+  } catch {
     notFound();
   }
 
@@ -26,7 +26,9 @@ export default async function ProfilePage({
       <section className="space-y-2">
         <h1 className="text-4xl font-heading">@{profile.username}</h1>
         <div className="flex flex-col text-lg font-medium">
-          <span>{profile.firstName} {profile.lastName}</span>
+          <span>
+            {profile.firstName} {profile.lastName}
+          </span>
           <span className="text-stone-600">{profile.email}</span>
           <span className="text-stone-500 text-sm mt-1">
             Member since {new Date(profile.createdAt).toLocaleDateString()}
@@ -42,7 +44,7 @@ export default async function ProfilePage({
 
       <div className="space-y-8 pt-4">
         <h2 className="text-2xl font-heading">Videos</h2>
-        
+
         {profile.videos.content.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
@@ -50,14 +52,16 @@ export default async function ProfilePage({
                 <VideoCard key={video.Id} video={video} />
               ))}
             </div>
-            
+
             <HomeFeedPagination
               currentPage={profile.videos.number}
               totalPages={profile.videos.totalPages}
             />
           </>
         ) : (
-          <p className="text-stone-500 italic">This user has no published videos.</p>
+          <p className="text-stone-500 italic">
+            This user has no published videos.
+          </p>
         )}
       </div>
     </div>

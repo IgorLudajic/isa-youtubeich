@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -91,7 +98,7 @@ export default function SignupForm() {
 
   if (successMessage) {
     return (
-      <Card className="max-w-[400px]">
+      <Card className="max-w-100">
         <CardHeader>
           <CardTitle>Uspešna registracija</CardTitle>
         </CardHeader>
@@ -103,7 +110,7 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="max-w-[400px]">
+    <div className="max-w-100">
       <Tabs
         defaultValue="account"
         className="w-full"
@@ -294,7 +301,7 @@ export default function SignupForm() {
         </TabsContent>
       </Tabs>
       {errorMessage && (
-        <Card className="max-w-[400px] mt-4 bg-rose-100">
+        <Card className="max-w-100 mt-4 bg-rose-100">
           <CardHeader>
             <CardTitle>Greška</CardTitle>
           </CardHeader>

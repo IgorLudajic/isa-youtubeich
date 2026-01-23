@@ -23,14 +23,14 @@ export default function CommentForm({ videoId }: CommentFormProps) {
 
     setIsSubmitting(true);
     setError(null); // Reset error on new attempt
-    
+
     try {
       await postComment(videoId, text.trim(), pathname);
       setText("");
-      router.refresh(); 
-    } catch (err: any) {
+      router.refresh();
+    } catch (err: unknown) {
       console.error("Failed to post comment", err);
-      setError("You have exceeded the limit of 60 comments per hour."); 
+      setError("You have exceeded the limit of 60 comments per hour.");
     } finally {
       setIsSubmitting(false);
     }
@@ -45,9 +45,9 @@ export default function CommentForm({ videoId }: CommentFormProps) {
           setText(e.target.value);
           if (error) setError(null);
         }}
-        className="min-h-[80px]"
+        className="min-h-20"
       />
-      
+
       {error && (
         <p className="text-sm font-medium text-destructive bg-destructive/10 p-2 rounded-base border-2 border-destructive">
           {error}
