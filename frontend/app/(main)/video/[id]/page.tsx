@@ -30,7 +30,7 @@ export default async function VideoPage({
   }
 
   return (
-    <div className="min-h-screen bg-background bg-grid p-4 md:p-8">
+    <div className="min-h-screen">
       <ViewTracker videoId={id} />
       <div className="max-w-4xl mx-auto">
         <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative z-10">
@@ -52,12 +52,19 @@ export default async function VideoPage({
           </div>
 
           <div className="flex items-start justify-between mb-4">
-            <Link
-              href={`/profiles/${video.creatorUsername}`}
-              className="text-lime-700 font-mono font-[600] hover:underline"
-            >
-              @{video.creatorUsername}
-            </Link>
+            <div>
+              <Link
+                href={`/profiles/${video.creatorUsername}`}
+                className="text-lime-700 font-mono font-[600] hover:underline"
+              >
+                @{video.creatorUsername}
+              </Link>
+              <p className="text-sm text-stone-500 mt-1">
+                Objavljeno{" "}
+                <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+              </p>
+            </div>
+
             <div className="flex gap-2 text-sm pt-2">
               <LikeDislikeButtons
                 videoId={id}
@@ -68,13 +75,11 @@ export default async function VideoPage({
               />
             </div>
           </div>
-          <p className="text-sm text-stone-500">
-            Objavljeno{" "}
-            <span>{new Date(video.createdAt).toLocaleDateString()}</span>
-          </p>
+
+          <div>{video.description}</div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-12">
           <CommentsList videoId={id} page={page} />
         </div>
       </div>
