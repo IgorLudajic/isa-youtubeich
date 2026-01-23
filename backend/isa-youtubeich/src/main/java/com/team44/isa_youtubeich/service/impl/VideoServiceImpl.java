@@ -11,22 +11,21 @@ import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.VideoService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.cache.annotation.Cacheable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Date;
-import java.util.UUID;
-import java.util.List;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -150,6 +149,7 @@ public class VideoServiceImpl implements VideoService {
         VideoDetailsDto dto = new VideoDetailsDto(
                 video.getId(),
                 video.getTitle(),
+                video.getDescription(),
                 // IZMENA: Vraćamo URL ka kontroleru
                 API_BASE_URL + "/" + video.getId() + "/thumbnail",
                 video.getViewCount(),
