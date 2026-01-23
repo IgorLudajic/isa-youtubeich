@@ -8,6 +8,7 @@
             <option value="dev" />
           </list>
         </option>
+        <option name="removeOrphansOnComposeDown" value="false" />
         <option name="sourceFilePath" value="backend/compose.yml" />
         <option name="upDetach" value="false" />
       </settings>
