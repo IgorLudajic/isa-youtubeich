@@ -2,6 +2,8 @@ package com.team44.isa_youtubeich.crdt;
 
 import com.team44.isa_youtubeich.instance.InstanceIdLeaseService;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -9,9 +11,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
+import java.io.*;
+import java.util.Base64;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 public class GCounter implements MessageListener {
+
+    private static final Logger log = LoggerFactory.getLogger(GCounter.class);
 
     private final StringRedisTemplate redisTemplate;
     private final InstanceIdLeaseService leaseService;
@@ -38,8 +44,22 @@ public class GCounter implements MessageListener {
     public void increment() {
         int id = leaseService.getInstanceId(); // 0-based index
         long newValue = counters.incrementAndGet(id);
-        String message = id + ":" + newValue;
-        redisTemplate.convertAndSend(channel, message);
+        byte[] message;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             DataOutputStream dos = new DataOutputStream(baos)) {
+            dos.writeInt(id);
+            dos.writeLong(newValue);
+            message = baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to serialize message", e);
+        }
+
+        try {
+            String payload = Base64.getEncoder().encodeToString(message);
+            redisTemplate.convertAndSend(channel, payload);
+        } catch (Exception e) {
+            log.warn("Failed to publish counter update to Redis; continuing with local state", e);
+        }
     }
 
     public long getValue() {
@@ -52,10 +72,13 @@ public class GCounter implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        String msg = new String(message.getBody());
-        String[] parts = msg.split(":");
-        int id = Integer.parseInt(parts[0]);
-        long value = Long.parseLong(parts[1]);
-        counters.updateAndGet(id, current -> Math.max(current, value));
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(message.getBody()));
+             DataInputStream dis = new DataInputStream(bais)) {
+            int id = dis.readInt();
+            long value = dis.readLong();
+            counters.updateAndGet(id, current -> Math.max(current, value));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize message", e);
+        }
     }
 }
