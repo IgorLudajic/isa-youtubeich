@@ -34,11 +34,7 @@ export default async function VideoPage({
       <ViewTracker videoId={id} />
       <div className="max-w-4xl mx-auto">
         <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative z-10">
-          <video
-            controls
-            className="w-full h-full"
-            poster={getFullUrl(video.thumbnailUrl)}
-          >
+          <video controls className="w-full h-full" poster={video.thumbnailUrl}>
             <source
               src={getFullUrl(`/api/videos/${id}/stream`)}
               type="video/mp4"
