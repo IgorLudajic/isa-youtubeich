@@ -1,0 +1,32 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Seed DB" type="docker-deploy" factoryName="docker-compose.yml" folderName="Development" server-name="Docker">
+    <deployment type="docker-compose.yml">
+      <settings>
+        <option name="composeProjectName" value="isa-youtubeich" />
+        <option name="envVars">
+          <list>
+            <DockerEnvVarImpl>
+              <option name="name" value="SPRING_PROFILES_ACTIVE" />
+              <option name="value" value="dev,dev-reset" />
+            </DockerEnvVarImpl>
+            <DockerEnvVarImpl>
+              <option name="name" value="SPRING_DEVTOOLS_RESTART_ENABLED" />
+              <option name="value" value="false" />
+            </DockerEnvVarImpl>
+          </list>
+        </option>
+        <option name="removeOrphansOnComposeDown" value="false" />
+        <option name="services">
+          <list>
+            <option value="app-dev" />
+          </list>
+        </option>
+        <option name="sourceFilePath" value="backend/compose.yml" />
+        <option name="upAbortOnContainerExit" value="true" />
+        <option name="upDetach" value="false" />
+        <option name="upExitCodeFromService" value="app-dev" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>
