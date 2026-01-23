@@ -104,7 +104,9 @@ export default function LikeDislikeButtons({
       <Button
         size="sm"
         className={`transition-colors duration-200 ${
-          disliked ? "bg-red-500 text-white hover:bg-red-600" : "bg-red-500/50"
+          disliked
+            ? "bg-red-600/70 text-white hover:bg-red-600/90"
+            : "bg-red-500/50"
         }`}
         onClick={handleDislike}
       >
