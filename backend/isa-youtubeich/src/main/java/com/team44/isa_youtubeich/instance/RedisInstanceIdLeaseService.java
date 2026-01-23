@@ -16,7 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class RedisInstanceIdLeaseService implements InitializingBean, DisposableBean, SmartLifecycle {
+public class RedisInstanceIdLeaseService implements InstanceIdLeaseService, InitializingBean, DisposableBean, SmartLifecycle {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final int maxInstances;
@@ -24,13 +24,13 @@ public class RedisInstanceIdLeaseService implements InitializingBean, Disposable
     private final Duration renewEvery;
 
     private final RedisScript<Long> allocateScript = RedisScript.of("""
-            for i=1, tonumber(ARGV[1]) do
+            for i=0, tonumber(ARGV[1])-1 do
               local key = KEYS[1] .. i
               if redis.call('SET', key, ARGV[2], 'NX', 'PX', ARGV[3]) then
                 return i
               end
             end
-            return 0
+            return -1
             """, Long.class);
 
     private final RedisScript<Long> renewScript = RedisScript.of("""
@@ -118,8 +118,8 @@ public class RedisInstanceIdLeaseService implements InitializingBean, Disposable
         Object[] args = {Integer.toString(maxInstances), ownerToken, Long.toString(leaseTtl.toMillis())};
         Long id = stringRedisTemplate.execute(allocateScript, keys, args);
 
-        if (id == null || id == 0L) {
-            throw new IllegalStateException("No instance id available in pool 1.." + maxInstances);
+        if (id == null || id == -1L) {
+            throw new IllegalStateException("No instance id available in pool 0.." + (maxInstances - 1));
         }
         this.instanceId = id.intValue();
     }
