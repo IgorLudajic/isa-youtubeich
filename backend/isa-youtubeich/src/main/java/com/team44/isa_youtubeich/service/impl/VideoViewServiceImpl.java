@@ -1,12 +1,13 @@
 package com.team44.isa_youtubeich.service.impl;
 
-import com.team44.isa_youtubeich.crdt.GCounter;
+import com.team44.isa_youtubeich.crdt.VideoCounter;
 import com.team44.isa_youtubeich.domain.model.User;
 import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.domain.model.VideoView;
 import com.team44.isa_youtubeich.instance.InstanceIdLeaseService;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
+import com.team44.isa_youtubeich.repository.VideoViewRepository;
 import com.team44.isa_youtubeich.service.VideoViewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,9 +40,12 @@ public class VideoViewServiceImpl implements VideoViewService {
     @Autowired
     private RedisMessageListenerContainer redisMessageListenerContainer;
 
+    @Autowired
+    private VideoViewRepository videoViewRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final ConcurrentHashMap<Long, GCounter> gCounters = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, VideoCounter> videoCounters = new ConcurrentHashMap<>();
 
     @Override
     public void enqueueView(Long videoId, String username) {
@@ -62,8 +66,8 @@ public class VideoViewServiceImpl implements VideoViewService {
         try {
             String json = objectMapper.writeValueAsString(view);
             redisTemplate.opsForList().leftPush("video:view_queue", json);
-            // Use GCounter for immediate view count
-            getGCounter(videoId).increment();
+            // Use VideoCounter for immediate view count
+            getVideoCounter(videoId).increment();
         } catch (Exception e) {
             throw new RuntimeException("Failed to enqueue view", e);
         }
@@ -71,15 +75,15 @@ public class VideoViewServiceImpl implements VideoViewService {
 
     @Override
     public Long getViewCount(Long videoId) {
-        return getGCounter(videoId).getValue();
+        return getVideoCounter(videoId).getValue();
     }
 
-    private GCounter getGCounter(Long videoId) {
-        return gCounters.computeIfAbsent(videoId, id -> {
+    private VideoCounter getVideoCounter(Long videoId) {
+        return videoCounters.computeIfAbsent(videoId, id -> {
             String channel = "gcounter:video:" + id;
-            GCounter gCounter = new GCounter(stringRedisTemplate, instanceIdLeaseService, redisMessageListenerContainer, channel);
-            gCounter.init();
-            return gCounter;
+            VideoCounter videoCounter = new VideoCounter(stringRedisTemplate, instanceIdLeaseService, redisMessageListenerContainer, channel, id, videoViewRepository, videoRepository);
+            videoCounter.init();
+            return videoCounter;
         });
     }
 }

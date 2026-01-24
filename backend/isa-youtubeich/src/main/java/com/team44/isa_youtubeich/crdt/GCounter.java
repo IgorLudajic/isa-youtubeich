@@ -86,14 +86,30 @@ public class GCounter implements MessageListener {
         }
     }
 
-    private void writeUUID(DataOutputStream dos, UUID uuid) throws IOException {
+    protected void writeUUID(DataOutputStream dos, UUID uuid) throws IOException {
         dos.writeLong(uuid.getMostSignificantBits());
         dos.writeLong(uuid.getLeastSignificantBits());
     }
 
-    private UUID readUUID(DataInputStream dis) throws IOException {
+    protected UUID readUUID(DataInputStream dis) throws IOException {
         long mostSigBits = dis.readLong();
         long leastSigBits = dis.readLong();
         return new UUID(mostSigBits, leastSigBits);
+    }
+
+    protected ConcurrentHashMap<UUID, AtomicLong> getCounters() {
+        return counters;
+    }
+
+    protected StringRedisTemplate getRedisTemplate() {
+        return redisTemplate;
+    }
+
+    protected String getChannel() {
+        return channel;
+    }
+
+    protected InstanceIdLeaseService getLeaseService() {
+        return leaseService;
     }
 }
