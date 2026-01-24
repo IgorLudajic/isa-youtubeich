@@ -9,7 +9,6 @@ import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.VideoViewService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -39,9 +38,6 @@ public class VideoViewServiceImpl implements VideoViewService {
 
     @Autowired
     private RedisMessageListenerContainer redisMessageListenerContainer;
-
-    @Value("${app.instance-id.max-instances:16}")
-    private int maxInstances;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -81,7 +77,7 @@ public class VideoViewServiceImpl implements VideoViewService {
     private GCounter getGCounter(Long videoId) {
         return gCounters.computeIfAbsent(videoId, id -> {
             String channel = "gcounter:video:" + id;
-            GCounter gCounter = new GCounter(stringRedisTemplate, instanceIdLeaseService, redisMessageListenerContainer, maxInstances, channel);
+            GCounter gCounter = new GCounter(stringRedisTemplate, instanceIdLeaseService, redisMessageListenerContainer, channel);
             gCounter.init();
             return gCounter;
         });

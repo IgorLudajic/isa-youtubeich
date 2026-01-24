@@ -5,11 +5,9 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -19,56 +17,27 @@ import java.util.concurrent.TimeUnit;
 public class RedisInstanceIdLeaseService implements InstanceIdLeaseService, InitializingBean, DisposableBean, SmartLifecycle {
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final int maxInstances;
     private final Duration leaseTtl;
     private final Duration renewEvery;
 
-    private final RedisScript<Long> allocateScript = RedisScript.of("""
-            for i=0, tonumber(ARGV[1])-1 do
-              local key = KEYS[1] .. i
-              if redis.call('SET', key, ARGV[2], 'NX', 'PX', ARGV[3]) then
-                return i
-              end
-            end
-            return -1
-            """, Long.class);
-
-    private final RedisScript<Long> renewScript = RedisScript.of("""
-            if redis.call('GET', KEYS[1]) == ARGV[1] then
-              return redis.call('PEXPIRE', KEYS[1], ARGV[2])
-            else
-              return 0
-            end
-            """, Long.class);
-
-    private final RedisScript<Long> releaseScript = RedisScript.of("""
-            if redis.call('GET', KEYS[1]) == ARGV[1] then
-              return redis.call('DEL', KEYS[1])
-            else
-              return 0
-            end
-            """, Long.class);
-
     private final String ownerToken = UUID.randomUUID().toString();
-    private volatile Integer instanceId;
+    private volatile UUID instanceId;
     private volatile boolean running;
 
     private ScheduledExecutorService scheduler;
 
     public RedisInstanceIdLeaseService(
             StringRedisTemplate stringRedisTemplate,
-            @Value("${app.instance-id.max-instances:16}") int maxInstances,
             @Value("${app.instance-id.lease-ttl-seconds:30}") long leaseTtlSeconds,
             @Value("${app.instance-id.renew-every-seconds:10}") long renewEverySeconds
     ) {
         this.stringRedisTemplate = stringRedisTemplate;
-        this.maxInstances = maxInstances;
         this.leaseTtl = Duration.ofSeconds(leaseTtlSeconds);
         this.renewEvery = Duration.ofSeconds(renewEverySeconds);
     }
 
-    public int getInstanceId() {
-        Integer id = instanceId;
+    public UUID getInstanceId() {
+        UUID id = instanceId;
         if (id == null) throw new IllegalStateException("Instance id not allocated yet");
         return id;
     }
@@ -114,14 +83,14 @@ public class RedisInstanceIdLeaseService implements InstanceIdLeaseService, Init
     }
 
     private void allocateOrThrow() {
-        List<String> keys = List.of("app:instance:lease:");
-        Object[] args = {Integer.toString(maxInstances), ownerToken, Long.toString(leaseTtl.toMillis())};
-        Long id = stringRedisTemplate.execute(allocateScript, keys, args);
+        UUID id = UUID.randomUUID();
+        String key = "app:instance:lease:" + id.toString();
+        Boolean success = stringRedisTemplate.opsForValue().setIfAbsent(key, ownerToken, leaseTtl);
 
-        if (id == null || id == -1L) {
-            throw new IllegalStateException("No instance id available in pool 0.." + (maxInstances - 1));
+        if (success == null || !success) {
+            throw new IllegalStateException("Failed to allocate unique instance id");
         }
-        this.instanceId = id.intValue();
+        this.instanceId = id;
     }
 
     private void renewLeaseSafe() {
@@ -134,29 +103,27 @@ public class RedisInstanceIdLeaseService implements InstanceIdLeaseService, Init
     }
 
     private void renewLeaseOrReacquire() {
-        Integer id = instanceId;
+        UUID id = instanceId;
         if (id == null) return;
 
         String key = "app:instance:lease:" + id;
-        List<String> keys = List.of(key);
-        Object[] args = {ownerToken, Long.toString(leaseTtl.toMillis())};
-        Long renewed = stringRedisTemplate.execute(renewScript, keys, args);
+        Long renewed = stringRedisTemplate.getExpire(key, TimeUnit.MILLISECONDS);
 
-        if (renewed == null || renewed == 0L) {
+        if (renewed == null || renewed <= 0) {
             // lease lost (expired or stolen): attempt to reacquire a new id
             this.instanceId = null;
             allocateOrThrow();
+        } else {
+            stringRedisTemplate.expire(key, leaseTtl.toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
     private void releaseLease() {
-        Integer id = instanceId;
+        UUID id = instanceId;
         if (id == null) return;
 
         String key = "app:instance:lease:" + id;
-        List<String> keys = List.of(key);
-        Object[] args = {ownerToken};
-        stringRedisTemplate.execute(releaseScript, keys, args);
+        stringRedisTemplate.delete(key);
 
         instanceId = null;
     }

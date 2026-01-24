@@ -38,7 +38,7 @@ public class BatchViewProcessor implements SmartLifecycle {
     @Override
     public void start() {
         if (running) return;
-        if (instanceIdLeaseService.getInstanceId() == 0) { // Only instance 0 processes
+        if (instanceIdLeaseService.getInstanceId().hashCode() % 10 == 0) { // Only one instance processes, based on UUID hash
             scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "batch-view-processor");
                 t.setDaemon(true);

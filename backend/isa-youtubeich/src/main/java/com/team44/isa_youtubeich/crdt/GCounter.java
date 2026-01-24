@@ -13,7 +13,9 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import java.io.*;
 import java.util.Base64;
-import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class GCounter implements MessageListener {
 
@@ -22,32 +24,31 @@ public class GCounter implements MessageListener {
     private final StringRedisTemplate redisTemplate;
     private final InstanceIdLeaseService leaseService;
     private final RedisMessageListenerContainer container;
-    private final int maxInstances;
     private final String channel;
 
-    private AtomicLongArray counters;
+    private ConcurrentHashMap<UUID, AtomicLong> counters;
 
-    public GCounter(StringRedisTemplate redisTemplate, InstanceIdLeaseService leaseService, RedisMessageListenerContainer container, @Value("${app.instance-id.max-instances:16}") int maxInstances, @Value("${gcounter.channel:gcounter:updates}") String channel) {
+    public GCounter(StringRedisTemplate redisTemplate, InstanceIdLeaseService leaseService, RedisMessageListenerContainer container, @Value("${gcounter.channel:gcounter:updates}") String channel) {
         this.redisTemplate = redisTemplate;
         this.leaseService = leaseService;
         this.container = container;
-        this.maxInstances = maxInstances;
         this.channel = channel;
     }
 
     @PostConstruct
     public void init() {
-        counters = new AtomicLongArray(maxInstances);
+        counters = new ConcurrentHashMap<>();
         container.addMessageListener(this, new ChannelTopic(channel));
     }
 
     public void increment() {
-        int id = leaseService.getInstanceId(); // 0-based index
-        long newValue = counters.incrementAndGet(id);
+        UUID id = leaseService.getInstanceId(); // 0-based index
+        AtomicLong counter = counters.computeIfAbsent(id, k -> new AtomicLong());
+        long newValue = counter.incrementAndGet();
         byte[] message;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream dos = new DataOutputStream(baos)) {
-            dos.writeInt(id);
+            writeUUID(dos, id);
             dos.writeLong(newValue);
             message = baos.toByteArray();
         } catch (IOException e) {
@@ -63,22 +64,36 @@ public class GCounter implements MessageListener {
     }
 
     public long getValue() {
-        long sum = 0;
-        for (int i = 0; i < maxInstances; i++) {
-            sum += counters.get(i);
-        }
-        return sum;
+        return counters.values().stream().mapToLong(AtomicLong::get).sum();
     }
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(message.getBody()));
              DataInputStream dis = new DataInputStream(bais)) {
-            int id = dis.readInt();
+            UUID id = readUUID(dis);
             long value = dis.readLong();
-            counters.updateAndGet(id, current -> Math.max(current, value));
+            counters.compute(id, (k, v) -> {
+                if (v == null) {
+                    return new AtomicLong(value);
+                } else {
+                    v.set(Math.max(v.get(), value));
+                    return v;
+                }
+            });
         } catch (IOException e) {
             throw new RuntimeException("Failed to deserialize message", e);
         }
+    }
+
+    private void writeUUID(DataOutputStream dos, UUID uuid) throws IOException {
+        dos.writeLong(uuid.getMostSignificantBits());
+        dos.writeLong(uuid.getLeastSignificantBits());
+    }
+
+    private UUID readUUID(DataInputStream dis) throws IOException {
+        long mostSigBits = dis.readLong();
+        long leastSigBits = dis.readLong();
+        return new UUID(mostSigBits, leastSigBits);
     }
 }
