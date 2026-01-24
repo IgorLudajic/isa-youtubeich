@@ -1,8 +1,7 @@
 package com.team44.isa_youtubeich.service;
 
 import com.team44.isa_youtubeich.domain.model.VideoView;
-import com.team44.isa_youtubeich.instance.InstanceIdLeaseService;
-import com.team44.isa_youtubeich.repository.VideoRepository;
+import com.team44.isa_youtubeich.instance.LeaderElectionService;
 import com.team44.isa_youtubeich.repository.VideoViewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
@@ -26,10 +25,7 @@ public class BatchViewProcessor implements SmartLifecycle {
     private VideoViewRepository videoViewRepository;
 
     @Autowired
-    private VideoRepository videoRepository;
-
-    @Autowired
-    private InstanceIdLeaseService instanceIdLeaseService;
+    private LeaderElectionService leaderElectionService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private ScheduledExecutorService scheduler;
@@ -38,14 +34,12 @@ public class BatchViewProcessor implements SmartLifecycle {
     @Override
     public void start() {
         if (running) return;
-        if (instanceIdLeaseService.getInstanceId().hashCode() % 10 == 0) { // Only one instance processes, based on UUID hash
-            scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "batch-view-processor");
-                t.setDaemon(true);
-                return t;
-            });
-            scheduler.scheduleAtFixedRate(this::processBatch, 0, 10, TimeUnit.SECONDS); // Every 10 seconds
-        }
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "batch-view-processor");
+            t.setDaemon(true);
+            return t;
+        });
+        scheduler.scheduleAtFixedRate(this::processBatch, 0, 10, TimeUnit.SECONDS); // Every 10 seconds
         running = true;
     }
 
@@ -69,6 +63,7 @@ public class BatchViewProcessor implements SmartLifecycle {
 
     private void processBatch() {
         try {
+            if (!leaderElectionService.isLeader()) return; // Only the leader processes
             List<VideoView> views = new ArrayList<>();
             String json;
             while ((json = (String) redisTemplate.opsForList().rightPop("video:view_queue")) != null) {

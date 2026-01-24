@@ -20,7 +20,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public GCounter gCounter(StringRedisTemplate redisTemplate, InstanceIdLeaseService leaseService, RedisMessageListenerContainer container, @Value("${app.instance-id.max-instances:16}") int maxInstances, @Value("${gcounter.channel:gcounter:updates}") String channel) {
-        return new GCounter(redisTemplate, leaseService, container, maxInstances, channel);
+    public GCounter gCounter(StringRedisTemplate redisTemplate, InstanceIdLeaseService leaseService, RedisMessageListenerContainer container, @Value("${gcounter.channel:gcounter:updates}") String channel) {
+        return new GCounter(redisTemplate, leaseService, container, channel);
     }
 }
