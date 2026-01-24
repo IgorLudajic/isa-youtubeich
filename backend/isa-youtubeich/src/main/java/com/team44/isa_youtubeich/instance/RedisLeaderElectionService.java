@@ -75,7 +75,11 @@ public class RedisLeaderElectionService implements LeaderElectionService, Initia
     @Override
     public void stop() {
         running = false;
-        releaseLeadership();
+        try {
+            releaseLeadership();
+        } catch (Exception e) {
+            // Ignore exceptions during shutdown
+        }
     }
 
     @Override

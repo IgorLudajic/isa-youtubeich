@@ -63,7 +63,11 @@ public class RedisInstanceIdLeaseService implements InstanceIdLeaseService, Init
     @Override
     public void stop() {
         running = false;
-        releaseLease();
+        try {
+            releaseLease();
+        } catch (Exception e) {
+            // Ignore exceptions during shutdown
+        }
     }
 
     @Override
