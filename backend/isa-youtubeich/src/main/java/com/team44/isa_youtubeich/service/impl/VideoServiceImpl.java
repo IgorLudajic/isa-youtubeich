@@ -1,37 +1,29 @@
 package com.team44.isa_youtubeich.service.impl;
 
-import com.team44.isa_youtubeich.crdt.GCounter;
 import com.team44.isa_youtubeich.domain.model.*;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
-import com.team44.isa_youtubeich.instance.InstanceIdLeaseService;
 import com.team44.isa_youtubeich.repository.*;
 import com.team44.isa_youtubeich.service.VideoService;
+import com.team44.isa_youtubeich.service.VideoViewService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 @Service
@@ -53,27 +45,12 @@ public class VideoServiceImpl implements VideoService {
     private VideoViewRepository videoViewRepository;
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
-
-    @Autowired
-    private InstanceIdLeaseService instanceIdLeaseService;
-
-    @Autowired
-    private RedisMessageListenerContainer redisMessageListenerContainer;
-
-    @Value("${app.instance-id.max-instances:16}")
-    private int maxInstances;
+    private VideoViewService videoViewService;
 
     private final String UPLOAD_DIR = "uploads/";
 
     private final String API_BASE_URL = "http://localhost:8080/api/videos";
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private final ConcurrentHashMap<Long, GCounter> gCounters = new ConcurrentHashMap<>();
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -161,7 +138,7 @@ public class VideoServiceImpl implements VideoService {
                         video.getTitle(),
                         // IZMENA: Vraćamo URL ka kontroleru, ne putanju sa diska!
                         API_BASE_URL + "/" + video.getId() + "/thumbnail",
-                        getViewCount(video.getId()),
+                        videoViewService.getViewCount(video.getId()),
                         video.getLikes(),
                         video.getDislikes(),
                         Date.from(video.getCreatedAt().toInstant()),
@@ -180,7 +157,7 @@ public class VideoServiceImpl implements VideoService {
                 video.getDescription(),
                 // IZMENA: Vraćamo URL ka kontroleru
                 API_BASE_URL + "/" + video.getId() + "/thumbnail",
-                getViewCount(video.getId()),
+                videoViewService.getViewCount(video.getId()),
                 video.getLikes(),
                 video.getDislikes(),
                 false,
@@ -249,40 +226,6 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public void enqueueView(Long videoId, String username) {
-        Video video = videoRepository.findById(videoId)
-                .orElseThrow(() -> new RuntimeException("Video not found"));
-
-        User user = null;
-        if (username != null) {
-            user = userRepository.findByUsername(username);
-        }
-
-        VideoView view = new VideoView();
-        view.setViewedAt(new Timestamp(System.currentTimeMillis()));
-        view.setViewedFrom(null); // TODO: extract from user IP/profile
-        view.setUser(user);
-        view.setVideo(video);
-
-        try {
-            String json = objectMapper.writeValueAsString(view);
-            redisTemplate.opsForList().leftPush("video:view_queue", json);
-            // Use GCounter for immediate view count
-            getGCounter(videoId).increment();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to enqueue view", e);
-        }
-    }
-
-    public Long getViewCount(Long videoId) {
-        return getGCounter(videoId).getValue();
-    }
-
-    private GCounter getGCounter(Long videoId) {
-        return gCounters.computeIfAbsent(videoId, id -> {
-            String channel = "gcounter:video:" + id;
-            GCounter gCounter = new GCounter(stringRedisTemplate, instanceIdLeaseService, redisMessageListenerContainer, maxInstances, channel);
-            gCounter.init();
-            return gCounter;
-        });
+        videoViewService.enqueueView(videoId, username);
     }
 }
