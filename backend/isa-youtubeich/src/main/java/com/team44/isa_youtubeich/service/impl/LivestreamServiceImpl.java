@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
 public class LivestreamServiceImpl implements LivestreamService {
@@ -35,13 +36,16 @@ public class LivestreamServiceImpl implements LivestreamService {
 
     private final ConcurrentHashMap<Long, Process> runningProcesses = new ConcurrentHashMap<>();
 
+    private final ConcurrentHashMap<Long, ScheduledFuture<?>> scheduledFutures = new ConcurrentHashMap<>();
+
     @Override
     public String getHlsDirectory() { return HLS_DIR; }
 
     @Override
     public void schedulePremiere(Long videoId, LocalDateTime premieresAt) {
         // Schedule on current instance
-        taskScheduler.schedule(() -> startPremiere(videoId), premieresAt.atZone(ZoneOffset.UTC).toInstant());
+        ScheduledFuture<?> future = taskScheduler.schedule(() -> startPremiere(videoId), premieresAt.atZone(ZoneOffset.UTC).toInstant());
+        scheduledFutures.put(videoId, future);
 
         // Publish to Redis for other instances
         redisTemplate.convertAndSend(PremiereMessageListener.TOPIC_NAME, videoId + ":" + premieresAt);
@@ -71,6 +75,36 @@ public class LivestreamServiceImpl implements LivestreamService {
         if (process != null && process.isAlive()) {
             process.destroyForcibly();
         }
+    }
+
+    @Override
+    public void cancelPremiere(Long videoId) {
+        Video video = videoRepository.findById(videoId).orElseThrow();
+        if (video.getStatus() != VideoStatus.SCHEDULED) return;
+
+        video.setStatus(VideoStatus.ENDED);
+        videoRepository.save(video);
+
+        // Cancel scheduled task
+        ScheduledFuture<?> future = scheduledFutures.remove(videoId);
+        if (future != null) {
+            future.cancel(false);
+        }
+    }
+
+    @Override
+    public void startPremiereEarly(Long videoId) {
+        Video video = videoRepository.findById(videoId).orElseThrow();
+        if (video.getStatus() != VideoStatus.SCHEDULED) return;
+
+        // Cancel scheduled task
+        ScheduledFuture<?> future = scheduledFutures.remove(videoId);
+        if (future != null) {
+            future.cancel(false);
+        }
+
+        // Start immediately
+        startPremiere(videoId);
     }
 
     private void transcodeToHLS(Video video) {
@@ -114,7 +148,6 @@ public class LivestreamServiceImpl implements LivestreamService {
             "-f", "hls",
             outputPath
         );
-        Process process = pb.start();
-        return process;
+        return pb.start();
     }
 }

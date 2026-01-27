@@ -6,5 +6,7 @@ public interface LivestreamService {
     void schedulePremiere(Long videoId, LocalDateTime premieresAt);
     void startPremiere(Long videoId);
     void endPremiere(Long videoId);
+    void cancelPremiere(Long videoId);
+    void startPremiereEarly(Long videoId);
     String getHlsDirectory();
 }

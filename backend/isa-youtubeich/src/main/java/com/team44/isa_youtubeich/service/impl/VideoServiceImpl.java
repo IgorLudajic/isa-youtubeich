@@ -149,9 +149,7 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public Page<VideoHomeDto> getPublicFeed(Pageable pageable){
-        LocalDateTime now = LocalDateTime.now();
-
-        return videoRepository.findAllReleasedVideos(now, pageable)
+        return videoRepository.findAllForHomeFeed(pageable)
                 .map(video -> new VideoHomeDto(
                         video.getId(),
                         video.getTitle(),
@@ -161,7 +159,10 @@ public class VideoServiceImpl implements VideoService {
                         video.getLikes(),
                         video.getDislikes(),
                         Date.from(video.getCreatedAt().toInstant()),
-                        video.getUser().getUsername()
+                        video.getUser().getUsername(),
+                        video.getStatus() == VideoStatus.SCHEDULED,
+                        video.getStatus() == VideoStatus.LIVE,
+                        video.getPremieresAt()
                 ));
     }
 
@@ -182,7 +183,9 @@ public class VideoServiceImpl implements VideoService {
                 false,
                 false,
                 Date.from(video.getCreatedAt().toInstant()),
-                video.getUser().getUsername()
+                video.getUser().getUsername(),
+                video.getPremieresAt(),
+                video.getStatus() == VideoStatus.LIVE
         );
 
         if(currentUsername != null){
@@ -241,4 +244,32 @@ public class VideoServiceImpl implements VideoService {
             throw new RuntimeException("Greška pri čitanju thumbnail-a: " + video.getThumbnailUrl());
         }
     }
+
+    @Override
+    public void startPremiere(Long id, String username) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (!username.equals(video.getUser().getUsername())) {
+            throw new RuntimeException("Not authorized");
+        }
+        livestreamService.startPremiereEarly(id);
+    }
+
+    @Override
+    public void endPremiere(Long id, String username) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (!username.equals(video.getUser().getUsername())) {
+            throw new RuntimeException("Not authorized");
+        }
+        livestreamService.endPremiere(id);
+    }
+
+    @Override
+    public void cancelPremiere(Long id, String username) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (!username.equals(video.getUser().getUsername())) {
+            throw new RuntimeException("Not authorized");
+        }
+        livestreamService.cancelPremiere(id);
+    }
 }
+

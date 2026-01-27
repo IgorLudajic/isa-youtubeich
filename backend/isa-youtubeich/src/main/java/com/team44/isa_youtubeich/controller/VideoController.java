@@ -4,6 +4,7 @@ import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.dto.StreamData;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
+import com.team44.isa_youtubeich.service.LivestreamService;
 import com.team44.isa_youtubeich.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,9 @@ public class VideoController {
 
     @Autowired
     private VideoService videoService;
+
+    @Autowired
+    private LivestreamService livestreamService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadVideo(
@@ -76,5 +80,38 @@ public class VideoController {
     @GetMapping(value = "/{id}/thumbnail", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<byte[]> getThumbnail(@PathVariable Long id) {
         return ResponseEntity.ok(videoService.getThumbnailContent(id));
+    }
+
+    @PostMapping("/{id}/startPremiere")
+    public ResponseEntity<?> startPremiere(@PathVariable Long id, Principal principal) {
+        try {
+            String username = principal.getName();
+            videoService.startPremiere(id, username);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/endPremiere")
+    public ResponseEntity<?> endPremiere(@PathVariable Long id, Principal principal) {
+        try {
+            String username = principal.getName();
+            videoService.endPremiere(id, username);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/cancelPremiere")
+    public ResponseEntity<?> cancelPremiere(@PathVariable Long id, Principal principal) {
+        try {
+            String username = principal.getName();
+            videoService.cancelPremiere(id, username);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 }

@@ -24,4 +24,10 @@ public interface VideoService {
     void incrementViews(Long id);
 
     byte[] getThumbnailContent(Long id);
+
+    void startPremiere(Long id, String username);
+
+    void endPremiere(Long id, String username);
+
+    void cancelPremiere(Long id, String username);
 }
