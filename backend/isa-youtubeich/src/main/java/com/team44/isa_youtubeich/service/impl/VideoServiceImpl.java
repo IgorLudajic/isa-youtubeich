@@ -1,6 +1,7 @@
 package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.*;
+import com.team44.isa_youtubeich.dto.StreamData;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
@@ -8,6 +9,7 @@ import com.team44.isa_youtubeich.repository.CommentRepository;
 import com.team44.isa_youtubeich.repository.ReactionRepository;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
+import com.team44.isa_youtubeich.service.LivestreamService;
 import com.team44.isa_youtubeich.service.VideoService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private LivestreamService livestreamService;
 
     private final String UPLOAD_DIR = "uploads/";
 
@@ -88,8 +93,10 @@ public class VideoServiceImpl implements VideoService {
             if (premieresAt != null && !premieresAt.isBlank()) {
                 LocalDateTime localDateTime = LocalDateTime.parse(premieresAt);
                 video.setPremieresAt(localDateTime);
+                video.setStatus(VideoStatus.SCHEDULED);
             } else {
                 video.setPremieresAt(null);
+                video.setStatus(VideoStatus.ENDED);
             }
             if (latitude != null && longitude != null) {
                 video.setLocation(new GeoLocation(latitude, longitude));
@@ -97,7 +104,13 @@ public class VideoServiceImpl implements VideoService {
                 video.setLocation(null);
             }
 
-            return videoRepository.save(video);
+            Video savedVideo = videoRepository.save(video);
+
+            if (savedVideo.getStatus() == VideoStatus.SCHEDULED) {
+                livestreamService.schedulePremiere(savedVideo.getId(), savedVideo.getPremieresAt());
+            }
+
+            return savedVideo;
 
         } catch (Exception e) {
             if (videoPath != null) {
@@ -111,15 +124,26 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    public byte[] getVideoContent(Long id) {
-        Video video = videoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
-
-        try {
-            Path path = Paths.get(video.getVideoUrl());
-            return Files.readAllBytes(path);
-        } catch (IOException e) {
-            throw new RuntimeException("Greška: Ne mogu da pročitam fajl sa lokacije: " + video.getVideoUrl());
+    public StreamData getVideoContent(Long id) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (video.getStatus() == VideoStatus.LIVE) {
+            // Return HLS playlist content
+            try {
+                Path path = Paths.get("uploads/hls/" + id + "/playlist.m3u8");
+                byte[] content = Files.readAllBytes(path);
+                return new StreamData(content, "application/vnd.apple.mpegurl");
+            } catch (IOException e) {
+                throw new RuntimeException("HLS playlist not found for video " + id);
+            }
+        } else {
+            // Return raw video content
+            try {
+                Path path = Paths.get(video.getVideoUrl());
+                byte[] content = Files.readAllBytes(path);
+                return new StreamData(content, "video/mp4");
+            } catch (IOException e) {
+                throw new RuntimeException("Greška: Ne mogu da pročitam fajl sa lokacije: " + video.getVideoUrl());
+            }
         }
     }
 

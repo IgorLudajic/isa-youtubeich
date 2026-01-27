@@ -1,7 +1,6 @@
 package com.team44.isa_youtubeich.domain.model;
 
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -49,6 +48,11 @@ public class Video implements Serializable {
     @Column(name = "premieres_at")
     @Getter @Setter
     private LocalDateTime premieresAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    @Getter @Setter
+    private VideoStatus status = VideoStatus.ENDED;
 
     @Embedded
     @Column(name = "file_size")

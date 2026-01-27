@@ -1,6 +1,7 @@
 package com.team44.isa_youtubeich.controller;
 
 import com.team44.isa_youtubeich.domain.model.Video;
+import com.team44.isa_youtubeich.dto.StreamData;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.service.VideoService;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -67,7 +67,10 @@ public class VideoController {
 
     @GetMapping(value = "/{id}/stream", produces = "video/mp4")
     public ResponseEntity<byte[]> streamVideo(@PathVariable Long id) {
-        return ResponseEntity.ok(videoService.getVideoContent(id));
+        StreamData streamData = videoService.getVideoContent(id);
+        return ResponseEntity.ok()
+                .header("Content-Type", streamData.getContentType())
+                .body(streamData.getContent());
     }
 
     @GetMapping(value = "/{id}/thumbnail", produces = MediaType.IMAGE_JPEG_VALUE)
