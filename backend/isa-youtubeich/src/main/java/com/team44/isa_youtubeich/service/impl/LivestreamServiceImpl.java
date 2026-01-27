@@ -5,6 +5,7 @@ import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.domain.model.VideoStatus;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.LivestreamService;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.TaskScheduler;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class LivestreamServiceImpl implements LivestreamService {
@@ -30,6 +32,8 @@ public class LivestreamServiceImpl implements LivestreamService {
     private TaskScheduler taskScheduler;
 
     private static final String HLS_DIR = "uploads/hls/";
+
+    private final ConcurrentHashMap<Long, Process> runningProcesses = new ConcurrentHashMap<>();
 
     @Override
     public String getHlsDirectory() { return HLS_DIR; }
@@ -63,7 +67,10 @@ public class LivestreamServiceImpl implements LivestreamService {
         videoRepository.save(video);
 
         // Stop transcoding if running
-        // For now, assume it ends when video ends
+        Process process = runningProcesses.remove(videoId);
+        if (process != null && process.isAlive()) {
+            process.destroyForcibly();
+        }
     }
 
     private void transcodeToHLS(Video video) {
@@ -71,24 +78,43 @@ public class LivestreamServiceImpl implements LivestreamService {
             Path hlsPath = Paths.get(HLS_DIR + video.getId());
             Files.createDirectories(hlsPath);
 
-            String inputPath = video.getVideoUrl();
-            String outputPath = hlsPath.toString() + "/playlist.m3u8";
+            Process process = runFfmpeg(video, hlsPath);
+            runningProcesses.put(video.getId(), process);
 
-            ProcessBuilder pb = new ProcessBuilder(
-                "ffmpeg",
-                "-i", inputPath,
-                "-c:v", "libx264",
-                "-c:a", "aac",
-                "-hls_time", "10",
-                "-hls_list_size", "10",
-                "-hls_flags", "delete_segments",
-                "-f", "hls",
-                outputPath
-            );
-            pb.start();
+            // Wait for process to finish and end premiere
+            new Thread(() -> {
+                try {
+                    int exitCode = process.waitFor();
+                    runningProcesses.remove(video.getId());
+                    if (exitCode == 0) {
+                        endPremiere(video.getId());
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static @NonNull Process runFfmpeg(Video video, Path hlsPath) throws IOException {
+        String inputPath = video.getVideoUrl();
+        String outputPath = hlsPath.toString() + "/playlist.m3u8";
+
+        ProcessBuilder pb = new ProcessBuilder(
+            "ffmpeg",
+            "-i", inputPath,
+            "-c:v", "libx264",
+            "-c:a", "aac",
+            "-hls_time", "10",
+            "-hls_list_size", "10",
+            "-hls_flags", "delete_segments",
+            "-f", "hls",
+            outputPath
+        );
+        Process process = pb.start();
+        return process;
     }
 }
