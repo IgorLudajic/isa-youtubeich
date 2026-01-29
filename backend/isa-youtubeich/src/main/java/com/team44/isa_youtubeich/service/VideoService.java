@@ -1,9 +1,9 @@
 package com.team44.isa_youtubeich.service;
 
 import com.team44.isa_youtubeich.domain.model.Video;
-import com.team44.isa_youtubeich.dto.StreamData;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
+import com.team44.isa_youtubeich.dto.VideoStreamResolutionDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,8 +14,6 @@ import java.util.List;
 public interface VideoService {
 
     Video uploadVideo(String title, String description, MultipartFile videoFile, MultipartFile thumbnailFile, String username, List<String> tags, String premieresAt, Double latitude, Double longitude) throws IOException;
-
-    StreamData getVideoContent(Long id);
 
     Page<VideoHomeDto> getPublicFeed(Pageable pageable);
 
@@ -30,4 +28,8 @@ public interface VideoService {
     void endPremiere(Long id, String username);
 
     void cancelPremiere(Long id, String username);
+
+    VideoStreamResolutionDto resolveStream(Long id);
+
+    Video getVideoById(Long id);
 }

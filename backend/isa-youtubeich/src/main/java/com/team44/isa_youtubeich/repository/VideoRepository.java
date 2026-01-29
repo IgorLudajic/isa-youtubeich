@@ -40,4 +40,7 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
 
     @Query("SELECT v FROM Video v WHERE v.status IN ('ENDED', 'SCHEDULED', 'LIVE') ORDER BY v.createdAt DESC")
     Page<Video> findAllForHomeFeed(Pageable pageable);
+
+    @Query("SELECT v FROM Video v WHERE v.premieresAt IS NOT NULL AND v.status IN ('SCHEDULED', 'LIVE')")
+    java.util.List<Video> findPremieresToResume();
 }
