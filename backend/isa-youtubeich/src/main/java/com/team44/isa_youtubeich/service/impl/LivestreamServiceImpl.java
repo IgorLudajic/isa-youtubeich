@@ -1,6 +1,5 @@
 package com.team44.isa_youtubeich.service.impl;
 
-import com.team44.isa_youtubeich.config.RedisConfig;
 import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.domain.model.VideoStatus;
 import com.team44.isa_youtubeich.repository.VideoRepository;
@@ -10,7 +9,6 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -35,9 +33,6 @@ public class LivestreamServiceImpl implements LivestreamService {
     private VideoRepository videoRepository;
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
     private TaskScheduler taskScheduler;
 
     private static final String HLS_DIR = "uploads/hls/";
@@ -54,9 +49,6 @@ public class LivestreamServiceImpl implements LivestreamService {
         // Schedule on current instance
         ScheduledFuture<?> future = taskScheduler.schedule(() -> startPremiere(videoId), premieresAt.atZone(ZoneOffset.UTC).toInstant());
         scheduledFutures.put(videoId, future);
-
-        // Publish to Redis for other instances
-        redisTemplate.convertAndSend(RedisConfig.PREMIERE_SCHEDULE_TOPIC, videoId + ":" + premieresAt);
     }
 
     @Override
