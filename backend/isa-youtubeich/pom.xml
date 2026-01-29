@@ -29,6 +29,7 @@
 	<properties>
 		<java.version>25</java.version>
 		<lombok.version>1.18.42</lombok.version>
+		<jackson.version>3.0.0</jackson.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -158,6 +159,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+		<dependency>
+			<groupId>tools.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
     </dependencies>
 
 	<build>
