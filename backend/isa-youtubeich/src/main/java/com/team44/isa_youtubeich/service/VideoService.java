@@ -32,4 +32,6 @@ public interface VideoService {
     VideoStreamResolutionDto resolveStream(Long id);
 
     Video getVideoById(Long id);
+
+    public void enqueueView(Long videoId, String username);
 }

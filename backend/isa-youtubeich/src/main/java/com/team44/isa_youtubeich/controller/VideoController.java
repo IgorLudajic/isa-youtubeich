@@ -73,8 +73,9 @@ public class VideoController {
     }
 
     @PostMapping("/{id}/view")
-    public ResponseEntity<Void> viewVideo(@PathVariable Long id) {
-        videoService.incrementViews(id);
+    public ResponseEntity<Void> viewVideo(@PathVariable Long id, Principal principal) {
+        String username = (principal != null) ? principal.getName() : null;
+        videoService.enqueueView(id, username);
         return ResponseEntity.ok().build();
     }
 

@@ -20,9 +20,11 @@ public class Video implements Serializable {
     @Getter @Setter
     private Long id;
 
+    @Deprecated(forRemoval = true)
     @Getter @Setter
     private Long likes;
 
+    @Deprecated(forRemoval = true)
     @Getter @Setter
     private Long dislikes;
 
@@ -36,6 +38,7 @@ public class Video implements Serializable {
     @Getter @Setter
     private String description;
 
+    @Deprecated(forRemoval = true)
     @Column(columnDefinition = "bigint default 0")
     @Getter @Setter
     private Long viewCount = 0L;
