@@ -2,13 +2,15 @@ package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.domain.model.VideoStatus;
+import com.team44.isa_youtubeich.instance.RedisVideoTranscodeLeaseService;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.LivestreamService;
-import jakarta.annotation.PostConstruct;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,11 +38,20 @@ public class LivestreamServiceImpl implements LivestreamService {
     @Autowired
     private TaskScheduler taskScheduler;
 
+    @Autowired
+    private RedisVideoTranscodeLeaseService transcodeLeaseService;
+
     private static final String HLS_DIR = "uploads/hls/";
 
     private final ConcurrentHashMap<Long, Process> runningProcesses = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<Long, ScheduledFuture<?>> scheduledFutures = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<Long, ScheduledFuture<?>> leaseHeartbeats = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<Long, ScheduledFuture<?>> scheduledCleanups = new ConcurrentHashMap<>();
+
+    private static final Duration HLS_CLEANUP_DELAY = Duration.ofMinutes(1);
 
     @Override
     public String getHlsDirectory() { return HLS_DIR; }
@@ -54,6 +66,17 @@ public class LivestreamServiceImpl implements LivestreamService {
     @Override
     public void startPremiere(Long videoId) {
         Video video = videoRepository.findById(videoId).orElseThrow();
+
+        // Ensure only one instance actually does the transcoding. Others can still flip status,
+        // but only the lease-holder runs ffmpeg and owns lifecycle actions.
+        if (!transcodeLeaseService.tryAcquire(videoId)) {
+            log.info("Skipping startPremiere for videoId={} (transcoding lease held by another instance)", videoId);
+            return;
+        }
+
+        // If we previously scheduled a cleanup (due to end), cancel it because we're starting again.
+        cancelCleanup(videoId);
+
         if (video.getStatus() == VideoStatus.SCHEDULED) {
             video.setStatus(VideoStatus.LIVE);
             videoRepository.save(video);
@@ -70,13 +93,14 @@ public class LivestreamServiceImpl implements LivestreamService {
         video.setStatus(VideoStatus.ENDED);
         videoRepository.save(video);
 
-        // Stop transcoding if running
-        Process process = runningProcesses.remove(videoId);
-        if (process != null && process.isAlive()) {
-            process.destroyForcibly();
-        }
+        stopFfmpegIfRunning(videoId);
 
-        cleanupHlsOutput(videoId);
+        // Release lease immediately so another instance can take over if needed.
+        stopLeaseHeartbeat(videoId);
+        transcodeLeaseService.releaseIfHeld(videoId);
+
+        // Keep HLS around briefly for late fetches, then cleanup.
+        scheduleCleanup(videoId);
     }
 
     @Override
@@ -93,13 +117,12 @@ public class LivestreamServiceImpl implements LivestreamService {
             future.cancel(false);
         }
 
-        // Stop transcoding if running
-        Process process = runningProcesses.remove(videoId);
-        if (process != null && process.isAlive()) {
-            process.destroyForcibly();
-        }
+        stopFfmpegIfRunning(videoId);
 
-        cleanupHlsOutput(videoId);
+        stopLeaseHeartbeat(videoId);
+        transcodeLeaseService.releaseIfHeld(videoId);
+
+        scheduleCleanup(videoId);
     }
 
     @Override
@@ -118,40 +141,65 @@ public class LivestreamServiceImpl implements LivestreamService {
     }
 
     private void transcodeToHLS(Video video) {
+        long videoId = video.getId();
         try {
-            Path hlsPath = Paths.get(HLS_DIR + video.getId());
+            // Lease is required here too (defense in depth).
+            if (!transcodeLeaseService.isHeldByMe(videoId)) {
+                log.info("Not starting ffmpeg for videoId={} because this instance does not hold the lease", videoId);
+                return;
+            }
+
+            // Cancel any pending cleanup from a previous end.
+            cancelCleanup(videoId);
+
+            Path hlsPath = Paths.get(HLS_DIR + videoId);
             Files.createDirectories(hlsPath);
 
+            // Best-effort: if a previous instance died mid-stream, there might be old segments.
+            // We allow ffmpeg to append to playlist (-hls_flags append_list). If it fails, we can
+            // still restart from scratch by cleaning the directory manually.
+
             Process process = runFfmpeg(video, hlsPath);
-            runningProcesses.put(video.getId(), process);
+            runningProcesses.put(videoId, process);
+
+            // Heartbeat the lease while ffmpeg is alive.
+            startLeaseHeartbeat(videoId);
 
             // Drain ffmpeg output so the process can never block due to a full stdout buffer.
-            startLogDrainer(video.getId(), process);
+            startLogDrainer(videoId, process);
 
             // Wait for process to finish and end premiere
             new Thread(() -> {
                 try {
                     int exitCode = process.waitFor();
-                    runningProcesses.remove(video.getId());
+                    runningProcesses.remove(videoId);
 
-                    // If the process was killed intentionally (endPremiere/cancel), don't mark it again.
+                    // Stop heartbeat and release lease when ffmpeg exits.
+                    stopLeaseHeartbeat(videoId);
+                    transcodeLeaseService.releaseIfHeld(videoId);
+
+                    // If the process finished normally, end premiere.
                     if (exitCode == 0) {
-                        endPremiere(video.getId());
+                        endPremiere(videoId);
                     } else {
                         // 137 is a common "killed" exit code in containers; 255 is also common for forced stop.
                         if (exitCode == 137 || exitCode == 255) {
-                            log.info("ffmpeg stopped (likely terminated) for videoId={} exitCode={}", video.getId(), exitCode);
+                            log.info("ffmpeg stopped (likely terminated) for videoId={} exitCode={}", videoId, exitCode);
                         } else {
-                            log.warn("ffmpeg exited with code {} for videoId={}", exitCode, video.getId());
+                            log.warn("ffmpeg exited with code {} for videoId={}", exitCode, videoId);
                         }
+                        // Don't endPremiere automatically on abnormal exit; rely on resume logic / manual actions.
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-            }, "ffmpeg-wait-" + video.getId()).start();
+            }, "ffmpeg-wait-" + videoId).start();
 
         } catch (IOException e) {
-            log.error("Failed to start HLS transcoding for videoId={}", video.getId(), e);
+            log.error("Failed to start HLS transcoding for videoId={}", videoId, e);
+            // Ensure we don't keep a stale lease if ffmpeg failed to start.
+            stopLeaseHeartbeat(videoId);
+            transcodeLeaseService.releaseIfHeld(videoId);
         }
     }
 
@@ -247,10 +295,73 @@ public class LivestreamServiceImpl implements LivestreamService {
         }
     }
 
-    @PostConstruct
+    private void startLeaseHeartbeat(long videoId) {
+        // If already scheduled, don't double-heartbeat.
+        if (leaseHeartbeats.containsKey(videoId)) return;
+
+        // Tight heartbeat: ~1/3 TTL.
+        long periodMs = Math.max(1000, transcodeLeaseService.getLeaseTtl().toMillis() / 3);
+
+        ScheduledFuture<?> future = taskScheduler.scheduleAtFixedRate(() -> {
+            try {
+                // If we lost the lease, stop ffmpeg so another instance can take over quickly.
+                boolean renewed = transcodeLeaseService.renewIfHeld(videoId);
+                if (!renewed) {
+                    log.warn("Lost transcoding lease for videoId={} - stopping local ffmpeg", videoId);
+                    stopFfmpegIfRunning(videoId);
+                    stopLeaseHeartbeat(videoId);
+                }
+            } catch (Exception e) {
+                // If Redis is temporarily unavailable, keep ffmpeg running; lease will expire and takeover can occur.
+                log.debug("Lease heartbeat error for videoId={}", videoId, e);
+            }
+        }, Duration.ofMillis(periodMs));
+
+        leaseHeartbeats.put(videoId, future);
+    }
+
+    private void stopLeaseHeartbeat(long videoId) {
+        ScheduledFuture<?> fut = leaseHeartbeats.remove(videoId);
+        if (fut != null) {
+            fut.cancel(false);
+        }
+    }
+
+    private void stopFfmpegIfRunning(long videoId) {
+        Process process = runningProcesses.remove(videoId);
+        if (process != null && process.isAlive()) {
+            process.destroyForcibly();
+        }
+    }
+
+    private void scheduleCleanup(long videoId) {
+        cancelCleanup(videoId);
+
+        ScheduledFuture<?> fut = taskScheduler.schedule(() -> {
+            try {
+                // If someone restarted the premiere and re-acquired lease, skip deletion.
+                if (transcodeLeaseService.isLeaseActive(videoId)) {
+                    log.info("Skipping HLS cleanup for videoId={} because transcode lease is active", videoId);
+                    return;
+                }
+                cleanupHlsOutput(videoId);
+            } finally {
+                scheduledCleanups.remove(videoId);
+            }
+        }, Instant.now().plus(HLS_CLEANUP_DELAY));
+
+        scheduledCleanups.put(videoId, fut);
+    }
+
+    private void cancelCleanup(long videoId) {
+        ScheduledFuture<?> fut = scheduledCleanups.remove(videoId);
+        if (fut != null) {
+            fut.cancel(false);
+        }
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
     void resumePremieresOnStartup() {
-        // Assumption: a premiere should be considered "live" if premieresAt is in the past (or now)
-        // and status is SCHEDULED or LIVE.
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
         for (Video video : videoRepository.findPremieresToResume()) {
@@ -260,18 +371,23 @@ public class LivestreamServiceImpl implements LivestreamService {
             if (runningProcesses.containsKey(video.getId())) continue;
 
             if (!video.getPremieresAt().isAfter(now)) {
-                // We should be live now. Ensure status is LIVE and start transcoding.
-                if (video.getStatus() == VideoStatus.SCHEDULED) {
-                    video.setStatus(VideoStatus.LIVE);
-                    videoRepository.save(video);
-                }
+                // We should be live now.
+                // Only lease-holder should start ffmpeg; others just log and move on.
+                if (transcodeLeaseService.tryAcquire(video.getId())) {
+                    cancelCleanup(video.getId());
+                    if (video.getStatus() == VideoStatus.SCHEDULED) {
+                        video.setStatus(VideoStatus.LIVE);
+                        videoRepository.save(video);
+                    }
 
-                log.info("Resuming/starting premiere stream on startup for videoId={} premieresAt={} status={}",
-                        video.getId(), video.getPremieresAt(), video.getStatus());
-                transcodeToHLS(video);
+                    log.info("Resuming/starting premiere stream on startup for videoId={} premieresAt={} status={}",
+                            video.getId(), video.getPremieresAt(), video.getStatus());
+                    transcodeToHLS(video);
+                } else {
+                    log.info("Not resuming videoId={} on this instance (lease held elsewhere)", video.getId());
+                }
             } else {
                 // Premiere is still in the future, but the schedule might be missing if we restarted.
-                // Re-schedule local task (and publish to Redis so other instances can schedule too).
                 Duration until = Duration.between(now, video.getPremieresAt());
                 log.info("Re-scheduling future premiere on startup for videoId={} premieresAt={} (in {}s)",
                         video.getId(), video.getPremieresAt(), until.getSeconds());
