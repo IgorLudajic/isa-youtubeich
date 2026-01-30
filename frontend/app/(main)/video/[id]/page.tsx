@@ -7,6 +7,9 @@ import ViewTracker from "@/components/ViewTracker";
 import { i18n } from "@/lib/i18n";
 import Link from "next/link";
 import HlsVideoPlayer from "@/components/HlsVideoPlayer";
+import LocalTime from "@/components/LocalTime";
+import LocalDate from "@/components/LocalDate";
+import { Calendar } from "@carbon/icons-react";
 
 export default async function VideoPage({
   params,
@@ -58,6 +61,29 @@ export default async function VideoPage({
         </div>
 
         <div className="bg-background shadow-background shadow-[0_0_50px_50px] z-0">
+          {video.isUpcoming && (
+            <div className="flex items-center rounded-base border-[1.5px] border-teal-600 bg-teal-300/20 p-3 mb-5 shadow-[1px_1px_0px_0px] shadow-teal-600">
+              {" "}
+              <span className="font-[450] mr-1.5">
+                Ovaj snimak će se premijerno pustiti tek u
+              </span>
+              <span className="text-teal-800 font-semibold flex items-center gap-1">
+                <Calendar className="-mr-0.5" />
+                <span>
+                  <LocalTime date={video.premieresAt + "Z"} />,
+                </span>
+                <LocalDate date={video.premieresAt + "Z"} />
+              </span>
+              {/*<Button*/}
+              {/*  size="sm"*/}
+              {/*  variant="noShadow"*/}
+              {/*  className="ml-auto bg-teal-600/10 hover:bg-teal-600/20 text-gray-800 border-1 border-teal-600"*/}
+              {/*>*/}
+              {/*  Otkaži i objavi odmah*/}
+              {/*</Button>*/}
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-heading">{video.title}</h1>
             <span className="text-xl font-[600] ">
