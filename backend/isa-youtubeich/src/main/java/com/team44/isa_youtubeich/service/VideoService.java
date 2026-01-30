@@ -24,8 +24,6 @@ public interface VideoService {
 
     VideoDetailsDto getVideoDetails(Long id, String currentUsername);
 
-    void incrementViews(Long id);
-
     byte[] getThumbnailContent(Long id);
 
     public void enqueueView(Long videoId, String username);
