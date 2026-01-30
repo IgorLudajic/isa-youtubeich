@@ -13,6 +13,7 @@ import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.EmailService;
 import com.team44.isa_youtubeich.service.UserService;
+import com.team44.isa_youtubeich.service.VideoViewService;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -57,6 +58,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private VideoViewService videoViewService;
 
     @Override
     public UserTokenStateDto login(JwtAuthRequestDto authenticationRequest) {
@@ -225,7 +229,8 @@ public class UserServiceImpl implements UserService {
 
         Page<VideoHomeDto> videos = videoRepository.findByUserUsernameOrderByCreatedAtDesc(username, pageable)
                 .map(video -> new VideoHomeDto(
-                        video.getId(), video.getTitle(), video.getThumbnailUrl(), video.getViewCount(), video.getLikes(), video.getDislikes(), Date.from(video.getCreatedAt().toInstant()), username)
+                        video.getId(), video.getTitle(), video.getThumbnailUrl(), videoViewService.getViewCount(video.getId()),
+                        video.getLikes(), video.getDislikes(), Date.from(video.getCreatedAt().toInstant()), username)
                 );
 
         return new UserPublicProfileDto(

@@ -83,7 +83,6 @@ public class VideoServiceImpl implements VideoService {
             video.setVideoUrl(savedVideoStr);
             video.setThumbnailUrl(savedThumbStr);
             video.setUser(user);
-            video.setViewCount(0L);
             video.setLikes(0L);
             video.setDislikes(0L);
 
@@ -177,17 +176,6 @@ public class VideoServiceImpl implements VideoService {
         }
 
         return dto;
-    }
-
-    @Deprecated(forRemoval = true)
-    @Override
-    public synchronized void incrementViews(Long id) {
-        Video video = videoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Video not found"));
-
-        video.setViewCount(video.getViewCount() + 1);
-
-        videoRepository.save(video);
     }
 
     private void createUploadDirectoryIfNotExists() throws IOException {
