@@ -7,7 +7,6 @@ import { Upload } from "@carbon/icons-react";
 import { getProfile } from "@/lib/auth";
 
 export default async function Header() {
-
   const profile = await getProfile();
 
   return (
@@ -22,11 +21,14 @@ export default async function Header() {
             </div>
 
             <nav className="flex items-center space-x-4">
-
               {profile && (
                 <Link href="/upload">
-                  <Button variant="neutral" size="icon" className="hidden md:inline-flex">
-                      <Upload className="size-5" />
+                  <Button
+                    variant="neutral"
+                    size="icon"
+                    className="hidden md:inline-flex"
+                  >
+                    <Upload className="size-5" />
                   </Button>
                 </Link>
               )}

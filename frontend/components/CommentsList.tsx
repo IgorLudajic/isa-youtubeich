@@ -26,8 +26,8 @@ async function CommentsListOnly({ videoId, page }: CommentsListOnlyProps) {
             </div>
             <div className="flex-1 -mt-1">
               <div className="flex items-baseline gap-2">
-                <Link 
-                  href={`/profiles/${comment.username}`} 
+                <Link
+                  href={`/profiles/${comment.username}`}
                   className="font-semibold hover:underline decoration-2 underline-offset-4"
                 >
                   {comment.username}

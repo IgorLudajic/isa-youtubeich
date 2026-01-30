@@ -1,7 +1,6 @@
 import Link from "next/link";
 import ImageCard from "@/components/ui/image-card";
 import { VideoHomeDto } from "@/lib/videofeed";
-import { getFullUrl } from "@/lib/utils";
 import { i18n } from "@/lib/i18n";
 
 const API_BASE_URL = "http://localhost:8080/api";
@@ -11,13 +10,10 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video }: VideoCardProps) {
-    const thumbnailUrl = `${API_BASE_URL}/videos/${video.Id}/thumbnail`;
+  const thumbnailUrl = `${API_BASE_URL}/videos/${video.Id}/thumbnail`;
   return (
     <Link href={`/video/${video.Id}`}>
-          <ImageCard
-            imageUrl={thumbnailUrl}
-            className="cursor-pointer"
-          >
+      <ImageCard imageUrl={thumbnailUrl} className="cursor-pointer">
         <h3 className="text-lg line-clamp-2 font-heading leading-none">
           {video.title}
         </h3>

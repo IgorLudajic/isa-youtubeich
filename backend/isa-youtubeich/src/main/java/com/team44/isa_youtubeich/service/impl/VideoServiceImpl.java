@@ -4,29 +4,26 @@ import com.team44.isa_youtubeich.domain.model.*;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
-import com.team44.isa_youtubeich.repository.CommentRepository;
-import com.team44.isa_youtubeich.repository.ReactionRepository;
-import com.team44.isa_youtubeich.repository.UserRepository;
-import com.team44.isa_youtubeich.repository.VideoRepository;
+import com.team44.isa_youtubeich.repository.*;
 import com.team44.isa_youtubeich.service.VideoService;
+import com.team44.isa_youtubeich.service.VideoViewService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.cache.annotation.Cacheable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Date;
-import java.util.UUID;
-import java.util.List;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -44,9 +41,16 @@ public class VideoServiceImpl implements VideoService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private VideoViewRepository videoViewRepository;
+
+    @Autowired
+    private VideoViewService videoViewService;
+
     private final String UPLOAD_DIR = "uploads/";
 
     private final String API_BASE_URL = "http://localhost:8080/api/videos";
+
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -134,7 +138,7 @@ public class VideoServiceImpl implements VideoService {
                         video.getTitle(),
                         // IZMENA: Vraćamo URL ka kontroleru, ne putanju sa diska!
                         API_BASE_URL + "/" + video.getId() + "/thumbnail",
-                        video.getViewCount(),
+                        videoViewService.getViewCount(video.getId()),
                         video.getLikes(),
                         video.getDislikes(),
                         Date.from(video.getCreatedAt().toInstant()),
@@ -150,9 +154,10 @@ public class VideoServiceImpl implements VideoService {
         VideoDetailsDto dto = new VideoDetailsDto(
                 video.getId(),
                 video.getTitle(),
+                video.getDescription(),
                 // IZMENA: Vraćamo URL ka kontroleru
                 API_BASE_URL + "/" + video.getId() + "/thumbnail",
-                video.getViewCount(),
+                videoViewService.getViewCount(video.getId()),
                 video.getLikes(),
                 video.getDislikes(),
                 false,
@@ -174,6 +179,7 @@ public class VideoServiceImpl implements VideoService {
         return dto;
     }
 
+    @Deprecated(forRemoval = true)
     @Override
     public synchronized void incrementViews(Long id) {
         Video video = videoRepository.findById(id)
@@ -216,5 +222,10 @@ public class VideoServiceImpl implements VideoService {
         } catch (IOException e) {
             throw new RuntimeException("Greška pri čitanju thumbnail-a: " + video.getThumbnailUrl());
         }
+    }
+
+    @Override
+    public void enqueueView(Long videoId, String username) {
+        videoViewService.enqueueView(videoId, username);
     }
 }

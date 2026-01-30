@@ -1,16 +1,15 @@
 import { getProfile } from "@/lib/auth";
 import LoginButton from "@/components/LoginButton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Logout } from "@carbon/icons-react";
+import { Logout, User } from "@carbon/icons-react";
 import Link from "next/link";
 
 export default async function HeaderAvatarButton() {
@@ -21,34 +20,42 @@ export default async function HeaderAvatarButton() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Avatar className={"cursor-pointer size-11"}>
-          <AvatarImage src={profile.avatarUrl} alt={profile.name} />
-          <AvatarFallback>
-            {profile.name.charAt(0).toUpperCase() +
-              profile.surname.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <ProfileAvatar profile={profile} className={"cursor-pointer size-11"} />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-background" align="end">
-        <DropdownMenuLabel className="select-none">Moj nalog</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link 
+        <DropdownMenuLabel className="mb-2 flex items-center gap-2">
+          <ProfileAvatar profile={profile} className="size-9 select-none" />
+          <div className="flex flex-col">
+            <span>
+              {profile.name} {profile.surname}
+            </span>
+            <span className="font-mono font-semibold text-gray-500">
+              @{profile.username}
+            </span>
+          </div>
+        </DropdownMenuLabel>
+        {/*<DropdownMenuSeparator />*/}
+        <DropdownMenuGroup className="mb-1">
+          <DropdownMenuItem
+            asChild
+            className="bg-background border-2 border-border hover:bg-main"
+          >
+            <Link
               href={`/profiles/${profile.username}`}
               className="w-full flex items-center cursor-pointer gap-2"
             >
+              <User />
               <span>Moj profil</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        
-        <DropdownMenuSeparator />
+
+        {/*<DropdownMenuSeparator />*/}
         <DropdownMenuGroup>
           <form method="post" action="/logout">
             <DropdownMenuItem
               asChild
-              className="bg-background hover:bg-red-600/50 hover:border-red-600 bg-red-400/60 border-black"
+              className="hover:bg-red-600/50 hover:border-red-900 bg-red-400/60 border-black"
             >
               <button
                 type="submit"

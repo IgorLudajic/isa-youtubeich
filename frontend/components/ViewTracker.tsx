@@ -15,9 +15,7 @@ export default function ViewTracker({ videoId }: { videoId: number }) {
       .then(() => {
         router.refresh();
       })
-      .catch((err) =>
-        console.error("Failed to count view", err)
-      );
+      .catch((err) => console.error("Failed to count view", err));
 
     hasViewed.current = true;
   }, [videoId, router]);

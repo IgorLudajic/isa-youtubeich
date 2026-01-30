@@ -17,6 +17,7 @@ export interface VideoHomeDto {
 export interface VideoDetailsDto {
   Id: number;
   title: string;
+  description: string;
   thumbnailUrl: string;
   viewCount: number;
   likes: number;

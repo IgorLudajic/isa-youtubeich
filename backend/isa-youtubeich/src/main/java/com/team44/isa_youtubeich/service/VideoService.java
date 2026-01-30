@@ -6,9 +6,9 @@ import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.util.List;
-import java.time.LocalDateTime;
 
 public interface VideoService {
 
@@ -27,4 +27,6 @@ public interface VideoService {
     void incrementViews(Long id);
 
     byte[] getThumbnailContent(Long id);
+
+    public void enqueueView(Long videoId, String username);
 }
