@@ -6,6 +6,7 @@ import CommentsList from "@/components/CommentsList";
 import ViewTracker from "@/components/ViewTracker";
 import { i18n } from "@/lib/i18n";
 import Link from "next/link";
+import HlsVideoPlayer from "@/components/HlsVideoPlayer";
 
 export default async function VideoPage({
   params,
@@ -33,14 +34,27 @@ export default async function VideoPage({
     <div className="min-h-screen">
       <ViewTracker videoId={id} />
       <div className="max-w-4xl mx-auto">
-        <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative z-10">
-          <video controls className="w-full h-full" poster={video.thumbnailUrl}>
-            <source
+        <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative z-10 border">
+          {video.isLive ? (
+            <HlsVideoPlayer
+              autoPlay
+              className="w-full h-full"
+              poster={video.thumbnailUrl}
               src={getFullUrl(`/api/videos/${id}/stream`)}
-              type="video/mp4"
             />
-            Your browser does not support the video tag.
-          </video>
+          ) : (
+            <video
+              controls
+              className="w-full h-full"
+              poster={video.thumbnailUrl}
+            >
+              <source
+                src={getFullUrl(`/api/videos/${id}/stream`)}
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
+          )}
         </div>
 
         <div className="bg-background shadow-background shadow-[0_0_50px_50px] z-0">

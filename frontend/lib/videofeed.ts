@@ -12,6 +12,9 @@ export interface VideoHomeDto {
   dislikes: number;
   createdAt: string;
   creatorUsername: string;
+  isUpcoming: boolean;
+  isLive: boolean;
+  premieresAt: string;
 }
 
 export interface VideoDetailsDto {
@@ -26,6 +29,8 @@ export interface VideoDetailsDto {
   dislikedByCurrentUser: boolean;
   createdAt: string;
   creatorUsername: string;
+  premieresAt: string;
+  isLive: boolean;
 }
 
 export interface CommentDto {
