@@ -181,6 +181,7 @@ public class VideoServiceImpl implements VideoService {
                 Date.from(video.getCreatedAt().toInstant()),
                 video.getUser().getUsername(),
                 video.getPremieresAt(),
+                video.getStatus() == VideoStatus.SCHEDULED,
                 video.getStatus() == VideoStatus.LIVE
         );
 

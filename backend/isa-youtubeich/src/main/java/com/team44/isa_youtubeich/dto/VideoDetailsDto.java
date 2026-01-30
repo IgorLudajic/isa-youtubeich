@@ -23,5 +23,6 @@ public class VideoDetailsDto {
     private Date createdAt;
     private String creatorUsername;
     private LocalDateTime premieresAt;
+    private Boolean isUpcoming;
     private Boolean isLive;
 }

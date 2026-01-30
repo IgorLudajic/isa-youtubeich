@@ -30,6 +30,7 @@ export interface VideoDetailsDto {
   createdAt: string;
   creatorUsername: string;
   premieresAt: string;
+  isUpcoming: boolean;
   isLive: boolean;
 }
 
