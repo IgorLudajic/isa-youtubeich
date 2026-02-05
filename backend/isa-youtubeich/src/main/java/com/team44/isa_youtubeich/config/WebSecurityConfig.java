@@ -32,6 +32,9 @@ public class WebSecurityConfig {
     @Autowired
     private TokenUtils tokenUtils;
 
+    @Autowired
+    private ActiveUsersMetricsConfig activeUsersMetricsConfig;
+
     @Bean
     public UserDetailsService userDetailsService(){
         return new UserDetailsServiceImpl();
@@ -68,6 +71,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/videos/*/view").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
 
                 // TODO prosiriti po potrebi
 
@@ -77,7 +81,7 @@ public class WebSecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable);
 
-        http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService()), BasicAuthenticationFilter.class);
+        http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService(), activeUsersMetricsConfig), BasicAuthenticationFilter.class);
 
         http.authenticationProvider(authenticationProvider());
 
