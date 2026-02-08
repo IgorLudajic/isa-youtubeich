@@ -26,7 +26,7 @@ public class VideoPopularityService {
 
     public void calculateAndSavePopularity() {
         LocalDateTime now = LocalDateTime.now();
-        Timestamp since = Timestamp.valueOf(now.minusHours(24));
+        Timestamp since = Timestamp.valueOf(now.minusDays(7));
 
         List<VideoView> views = videoViewRepository.findByViewedAtGreaterThanEqual(since);
 
