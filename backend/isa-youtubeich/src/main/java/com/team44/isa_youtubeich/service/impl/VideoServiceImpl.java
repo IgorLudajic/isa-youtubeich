@@ -3,8 +3,10 @@ package com.team44.isa_youtubeich.service.impl;
 import com.team44.isa_youtubeich.domain.model.*;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
+import com.team44.isa_youtubeich.dto.VideoStreamResolutionDto;
 import com.team44.isa_youtubeich.exception.ResourceConflictException;
 import com.team44.isa_youtubeich.repository.*;
+import com.team44.isa_youtubeich.service.LivestreamService;
 import com.team44.isa_youtubeich.service.VideoService;
 import com.team44.isa_youtubeich.service.VideoViewService;
 import jakarta.transaction.Transactional;
@@ -42,12 +44,16 @@ public class VideoServiceImpl implements VideoService {
     private UserRepository userRepository;
 
     @Autowired
+    private LivestreamService livestreamService;
+
+    @Autowired
     private VideoViewRepository videoViewRepository;
 
     @Autowired
     private VideoViewService videoViewService;
 
     private final String UPLOAD_DIR = "uploads/";
+    private final String VIDEO_DIR = "uploads/videos/";
 
     private final String API_BASE_URL = "http://localhost:8080/api/videos";
 
@@ -70,17 +76,15 @@ public class VideoServiceImpl implements VideoService {
             User user = userRepository.findByUsername(username);
             if (user == null) throw new RuntimeException("User not found");
             createUploadDirectoryIfNotExists();
+            createVideoDirectoryIfNotExists();
 
-            String savedVideoStr = saveFileToDisk(videoFile);
-            videoPath = Paths.get(savedVideoStr);
-
+            // Save thumbnail immediately (we want it even if video transcoding fails later)
             String savedThumbStr = saveFileToDisk(thumbnailFile);
             thumbnailPath = Paths.get(savedThumbStr);
 
             Video video = new Video();
             video.setTitle(title);
             video.setDescription(description);
-            video.setVideoUrl(savedVideoStr);
             video.setThumbnailUrl(savedThumbStr);
             video.setUser(user);
             video.setLikes(0L);
@@ -92,8 +96,10 @@ public class VideoServiceImpl implements VideoService {
             if (premieresAt != null && !premieresAt.isBlank()) {
                 LocalDateTime localDateTime = LocalDateTime.parse(premieresAt);
                 video.setPremieresAt(localDateTime);
+                video.setStatus(VideoStatus.SCHEDULED);
             } else {
                 video.setPremieresAt(null);
+                video.setStatus(VideoStatus.ENDED);
             }
             if (latitude != null && longitude != null) {
                 video.setLocation(new GeoLocation(latitude, longitude));
@@ -101,7 +107,22 @@ public class VideoServiceImpl implements VideoService {
                 video.setLocation(null);
             }
 
-            return videoRepository.save(video);
+            Video savedVideo = videoRepository.save(video);
+
+            // Store MP4 under predictable static path.
+            String staticVideoPath = VIDEO_DIR + savedVideo.getId() + ".mp4";
+            Path staticPath = Paths.get(staticVideoPath);
+            Files.copy(videoFile.getInputStream(), staticPath, StandardCopyOption.REPLACE_EXISTING);
+            videoPath = staticPath;
+
+            savedVideo.setVideoUrl(staticVideoPath);
+            savedVideo = videoRepository.save(savedVideo);
+
+            if (savedVideo.getStatus() == VideoStatus.SCHEDULED) {
+                livestreamService.schedulePremiere(savedVideo.getId(), savedVideo.getPremieresAt());
+            }
+
+            return savedVideo;
 
         } catch (Exception e) {
             if (videoPath != null) {
@@ -114,24 +135,16 @@ public class VideoServiceImpl implements VideoService {
         }
     }
 
-    @Override
-    public byte[] getVideoContent(Long id) {
-        Video video = videoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
-
-        try {
-            Path path = Paths.get(video.getVideoUrl());
-            return Files.readAllBytes(path);
-        } catch (IOException e) {
-            throw new RuntimeException("Greška: Ne mogu da pročitam fajl sa lokacije: " + video.getVideoUrl());
+    private void createVideoDirectoryIfNotExists() throws IOException {
+        Path videoDir = Paths.get(VIDEO_DIR);
+        if (!Files.exists(videoDir)) {
+            Files.createDirectories(videoDir);
         }
     }
 
     @Override
     public Page<VideoHomeDto> getPublicFeed(Pageable pageable){
-        LocalDateTime now = LocalDateTime.now();
-
-        return videoRepository.findAllReleasedVideos(now, pageable)
+        return videoRepository.findAllForHomeFeed(pageable)
                 .map(video -> new VideoHomeDto(
                         video.getId(),
                         video.getTitle(),
@@ -141,7 +154,10 @@ public class VideoServiceImpl implements VideoService {
                         video.getLikes(),
                         video.getDislikes(),
                         Date.from(video.getCreatedAt().toInstant()),
-                        video.getUser().getUsername()
+                        video.getUser().getUsername(),
+                        video.getStatus() == VideoStatus.SCHEDULED,
+                        video.getStatus() == VideoStatus.LIVE,
+                        video.getPremieresAt()
                 ));
     }
 
@@ -162,7 +178,10 @@ public class VideoServiceImpl implements VideoService {
                 false,
                 false,
                 Date.from(video.getCreatedAt().toInstant()),
-                video.getUser().getUsername()
+                video.getUser().getUsername(),
+                video.getPremieresAt(),
+                video.getStatus() == VideoStatus.SCHEDULED,
+                video.getStatus() == VideoStatus.LIVE
         );
 
         if(currentUsername != null){
@@ -210,6 +229,82 @@ public class VideoServiceImpl implements VideoService {
         } catch (IOException e) {
             throw new RuntimeException("Greška pri čitanju thumbnail-a: " + video.getThumbnailUrl());
         }
+    }
+
+    @Override
+    public void startPremiere(Long id, String username) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (!username.equals(video.getUser().getUsername())) {
+            throw new RuntimeException("Not authorized");
+        }
+        livestreamService.startPremiereEarly(id);
+    }
+
+    @Override
+    public void endPremiere(Long id, String username) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (!username.equals(video.getUser().getUsername())) {
+            throw new RuntimeException("Not authorized");
+        }
+        livestreamService.endPremiere(id);
+    }
+
+    @Override
+    public void cancelPremiere(Long id, String username) {
+        Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video not found"));
+        if (!username.equals(video.getUser().getUsername())) {
+            throw new RuntimeException("Not authorized");
+        }
+        livestreamService.cancelPremiere(id);
+    }
+
+    @Override
+    public VideoStreamResolutionDto resolveStream(Long id) {
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new ResourceConflictException(id, "Video not found"));
+
+        // Expected asset locations (internal, controlled paths)
+        Path hlsPlaylistPath = Paths.get(livestreamService.getHlsDirectory(), String.valueOf(id), "playlist.m3u8");
+        String hlsPlaylistUrl = "/uploads/hls/" + id + "/playlist.m3u8";
+
+        Path mp4Path = Paths.get(VIDEO_DIR, id + ".mp4");
+        // IMPORTANT: MP4 must be served via controller to enforce VideoStatus.ENDED.
+        String mp4Url = API_BASE_URL + "/" + id + "/mp4";
+
+        boolean hlsExists = Files.exists(hlsPlaylistPath);
+        boolean mp4Exists = Files.exists(mp4Path);
+
+        // Decide based on domain status first.
+        if (video.getStatus() == VideoStatus.LIVE) {
+            if (hlsExists) {
+                return VideoStreamResolutionDto.available(VideoStreamResolutionDto.StreamKind.HLS, hlsPlaylistUrl, video.getStatus());
+            }
+            // Live, but playlist not there yet (ffmpeg startup delay or failure)
+            return VideoStreamResolutionDto.notReady(video.getStatus(), "Live stream is starting");
+        }
+
+        if (video.getStatus() == VideoStatus.SCHEDULED) {
+            // Gate playback behind the premiere.
+            return VideoStreamResolutionDto.notReady(video.getStatus(), "Premiere has not started");
+        }
+
+        // ENDED (or any other non-live) -> prefer VOD mp4
+        if (mp4Exists) {
+            return VideoStreamResolutionDto.available(VideoStreamResolutionDto.StreamKind.VOD, mp4Url, video.getStatus());
+        }
+
+        // Unexpected: ended but mp4 missing. As a last-resort, if HLS exists (cleanup failed), serve it.
+        if (hlsExists) {
+            return VideoStreamResolutionDto.available(VideoStreamResolutionDto.StreamKind.HLS, hlsPlaylistUrl, video.getStatus());
+        }
+
+        return VideoStreamResolutionDto.missing(video.getStatus(), "No stream assets found");
+    }
+
+    @Override
+    public Video getVideoById(Long id) {
+        return videoRepository.findById(id)
+                .orElseThrow(() -> new ResourceConflictException(id, "Video not found"));
     }
 
     @Override

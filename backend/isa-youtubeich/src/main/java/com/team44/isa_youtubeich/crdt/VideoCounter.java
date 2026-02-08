@@ -49,15 +49,27 @@ public class VideoCounter extends GCounter {
 
     @Override
     public void increment() {
-        UUID id = getLeaseService().getInstanceId();
-        AtomicLong counter = getCounters().computeIfAbsent(id, k -> new AtomicLong());
-        long newValue = counter.incrementAndGet();
+        UUID myId = getLeaseService().getInstanceId();
+
+        // 1. Update local state first
+        getCounters().computeIfAbsent(myId, k -> new AtomicLong()).incrementAndGet();
+
+        // 2. Serialize the ENTIRE map (State-based replication)
         byte[] message;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              DataOutputStream dos = new DataOutputStream(baos)) {
-            dos.writeByte('i');
-            writeUUID(dos, id);
-            dos.writeLong(newValue);
+
+            dos.writeByte('i'); // Type flag
+
+            // Snapshot the current state of the map to avoid ConcurrentModification exceptions affecting serialization
+            var currentMap = getCounters();
+            dos.writeInt(currentMap.size()); // Write size of map
+
+            for (var entry : currentMap.entrySet()) {
+                writeUUID(dos, entry.getKey());
+                dos.writeLong(entry.getValue().get());
+            }
+
             message = baos.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("Failed to serialize message", e);
@@ -83,25 +95,29 @@ public class VideoCounter extends GCounter {
         char type = (char) decoded[0];
         try (ByteArrayInputStream bais = new ByteArrayInputStream(decoded, 1, decoded.length - 1);
              DataInputStream dis = new DataInputStream(bais)) {
+
             if (type == 'i') {
-                // Handle increment as super
-                UUID id = readUUID(dis);
-                long value = dis.readLong();
-                getCounters().compute(id, (k, v) -> {
-                    if (v == null) {
-                        return new AtomicLong(value);
-                    } else {
-                        v.set(Math.max(v.get(), value));
-                        return v;
-                    }
-                });
+                // Handle Full State Merge
+                int mapSize = dis.readInt();
+                for (int i = 0; i < mapSize; i++) {
+                    UUID id = readUUID(dis);
+                    long remoteValue = dis.readLong();
+
+                    // Standard G-Counter Merge Rule: Max(local, remote)
+                    getCounters().compute(id, (k, v) -> {
+                        if (v == null) {
+                            return new AtomicLong(remoteValue);
+                        } else {
+                            v.set(Math.max(v.get(), remoteValue));
+                            return v;
+                        }
+                    });
+                }
             } else if (type == 'r') {
-                // req: respond with res
                 long reqTimestamp = dis.readLong();
                 long reqValue = dis.readLong();
                 publishRes(dbTimestamp.get(), dbValue.get());
             } else if (type == 's') {
-                // res: update if better
                 long resTimestamp = dis.readLong();
                 long resValue = dis.readLong();
                 if (resTimestamp < dbTimestamp.get() || (resTimestamp == dbTimestamp.get() && resValue > dbValue.get())) {
