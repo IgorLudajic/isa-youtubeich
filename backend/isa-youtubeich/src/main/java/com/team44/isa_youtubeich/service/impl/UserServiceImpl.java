@@ -1,9 +1,6 @@
 package com.team44.isa_youtubeich.service.impl;
 
-import com.team44.isa_youtubeich.domain.model.ActivationEmail;
-import com.team44.isa_youtubeich.domain.model.AddressJson;
-import com.team44.isa_youtubeich.domain.model.Role;
-import com.team44.isa_youtubeich.domain.model.User;
+import com.team44.isa_youtubeich.domain.model.*;
 import com.team44.isa_youtubeich.dto.*;
 import com.team44.isa_youtubeich.exception.AccountNotActivatedException;
 import com.team44.isa_youtubeich.exception.ValidationException;
@@ -217,15 +214,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserPublicProfileDto getPublicProfile(String username, Pageable pageable){
+    public UserPublicProfileDto getPublicProfile(String username, Pageable pageable) {
         User user = userRepository.findByUsername(username);
 
-        if(user == null)
+        if (user == null)
             throw new RuntimeException("User not found");
 
         Page<VideoHomeDto> videos = videoRepository.findByUserUsernameOrderByCreatedAtDesc(username, pageable)
                 .map(video -> new VideoHomeDto(
-                        video.getId(), video.getTitle(), video.getThumbnailUrl(), video.getViewCount(), video.getLikes(), video.getDislikes(), Date.from(video.getCreatedAt().toInstant()), username)
+                        video.getId(), video.getTitle(), video.getThumbnailUrl(), video.getViewCount(), video.getLikes(), video.getDislikes(), Date.from(video.getCreatedAt().toInstant()), username, video.getStatus() == VideoStatus.SCHEDULED, video.getStatus() == VideoStatus.LIVE, video.getPremieresAt())
                 );
 
         return new UserPublicProfileDto(

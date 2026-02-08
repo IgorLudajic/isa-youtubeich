@@ -1,8 +1,7 @@
 import { getPublicProfile, UserPublicProfileDto } from "@/lib/profile";
 import { notFound } from "next/navigation";
-import VideoCard from "@/components/VideoCard";
-import HomeFeedPagination from "@/components/HomeFeedPagination";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import VideoGrid from "@/components/VideoGrid";
 
 export default async function ProfilePage({
   params,
@@ -58,18 +57,11 @@ export default async function ProfilePage({
         </h2>
 
         {profile.videos.content.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {profile.videos.content.map((video) => (
-                <VideoCard key={video.Id} video={video} />
-              ))}
-            </div>
-
-            <HomeFeedPagination
-              currentPage={profile.videos.number}
-              totalPages={profile.videos.totalPages}
-            />
-          </>
+          <VideoGrid
+            videos={profile.videos.content}
+            currentPage={profile.videos.number}
+            totalPages={profile.videos.totalPages}
+          />
         ) : (
           <p className="text-stone-500 text-sm text-center select-none">
             Korisnik nije objavio nijedan snimak.
