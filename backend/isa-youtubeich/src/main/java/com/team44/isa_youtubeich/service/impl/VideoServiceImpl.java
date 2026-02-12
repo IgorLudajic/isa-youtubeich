@@ -87,7 +87,6 @@ public class VideoServiceImpl implements VideoService {
             video.setDescription(description);
             video.setThumbnailUrl(savedThumbStr);
             video.setUser(user);
-            video.setViewCount(0L);
             video.setLikes(0L);
             video.setDislikes(0L);
 
@@ -196,13 +195,6 @@ public class VideoServiceImpl implements VideoService {
         }
 
         return dto;
-    }
-
-    @Deprecated(forRemoval = true)
-    @Override
-    @Transactional
-    public void incrementViews(Long id) {
-        videoRepository.incrementViewCount(id);
     }
 
     private void createUploadDirectoryIfNotExists() throws IOException {

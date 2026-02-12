@@ -19,8 +19,6 @@ public interface VideoService {
 
     VideoDetailsDto getVideoDetails(Long id, String currentUsername);
 
-    void incrementViews(Long id);
-
     byte[] getThumbnailContent(Long id);
 
     void startPremiere(Long id, String username);
