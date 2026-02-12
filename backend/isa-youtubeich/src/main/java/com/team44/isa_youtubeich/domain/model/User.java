@@ -68,7 +68,6 @@ public class User implements UserDetails {
     }*/
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Mapiramo svaku Role u SimpleGrantedAuthority koristeći naziv uloge (npr. "ROLE_ADMIN")
         return this.roles.stream()
                 .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName()))
                 .collect(java.util.stream.Collectors.toList());

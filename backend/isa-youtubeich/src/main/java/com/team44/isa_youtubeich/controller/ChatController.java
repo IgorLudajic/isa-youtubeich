@@ -16,7 +16,6 @@ public class ChatController {
 
     @MessageMapping("/chat/{videoId}")
     public void sendMessage(@DestinationVariable Long videoId, @Payload ChatMessageDto chatMessage) {
-        // Lombok je generisao settere, pa ovo radi:
         chatMessage.setVideoId(videoId);
 
         chatRedisService.broadcastToCluster(chatMessage);

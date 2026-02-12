@@ -9,7 +9,6 @@ public class RabbitConfig {
 
     @Bean
     public Queue benchmarkQueue() {
-        // Ime reda mora biti isto kao ono u BenchmarkService i Listeneru
         return new Queue("benchmark_queue", false);
     }
 }

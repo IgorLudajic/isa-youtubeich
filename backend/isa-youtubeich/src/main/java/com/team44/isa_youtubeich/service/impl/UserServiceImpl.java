@@ -166,6 +166,12 @@ public class UserServiceImpl implements UserService {
             dto.setCountry(user.getAddressJson().getCountry());
         }
 
+        if (user.getRoles() != null) {
+            dto.setRoles(user.getRoles().stream()
+                    .map(role -> role.getName())
+                    .toList());
+        }
+
         return dto;
     }
 

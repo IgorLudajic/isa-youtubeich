@@ -18,14 +18,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @NotNull
     @Override
-    @Transactional // 👈 DODAJ OVU ANOTACIJU (uvezi iz org.springframework.transaction.annotation)
+    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException(String.format("No user found with username '%s'.", username));
         }
 
-        // Eksplicitno učitavanje uloga dok je sesija još otvorena
         user.getRoles().size();
 
         return user;

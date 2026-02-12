@@ -9,7 +9,7 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 
@@ -25,8 +25,11 @@ public class ChatRedisService implements MessageListener {
     @Autowired
     private RedisMessageListenerContainer redisContainer;
 
+    // 👇 KORISTIMO JsonMapper UMESTO ObjectMapper
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+
     private final String CHAT_CHANNEL = "global_chat_channel";
-    private final String DELIMITER = "###DELIMITER###";
+
     @PostConstruct
     public void init() {
         redisContainer.addMessageListener(this, new ChannelTopic(CHAT_CHANNEL));
@@ -34,36 +37,24 @@ public class ChatRedisService implements MessageListener {
 
     public void broadcastToCluster(ChatMessageDto message) {
         try {
-            String rawMessage = message.getSender() + DELIMITER +
-                    message.getContent() + DELIMITER +
-                    message.getVideoId();
-
-            redisTemplate.convertAndSend(CHAT_CHANNEL, rawMessage);
+            // FIX: Pretvaramo objekat u JSON string
+            String jsonMessage = jsonMapper.writeValueAsString(message);
+            redisTemplate.convertAndSend(CHAT_CHANNEL, jsonMessage);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // 2. Ručno vraćamo String u objekat (Deserijalizacija)
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
             String body = new String(message.getBody(), StandardCharsets.UTF_8);
 
-            String[] parts = body.split(java.util.regex.Pattern.quote(DELIMITER));
+            // FIX: Vraćamo JSON string nazad u Java objekat
+            ChatMessageDto chatMessage = jsonMapper.readValue(body, ChatMessageDto.class);
 
-            if (parts.length >= 3) {
-                String sender = parts[0];
-                String content = parts[1];
-                String videoIdStr = parts[2];
+            messagingTemplate.convertAndSend("/topic/video/" + chatMessage.getVideoId(), chatMessage);
 
-                ChatMessageDto chatMessage = new ChatMessageDto();
-                chatMessage.setSender(sender);
-                chatMessage.setContent(content);
-                chatMessage.setVideoId(Long.parseLong(videoIdStr));
-
-                messagingTemplate.convertAndSend("/topic/video/" + chatMessage.getVideoId(), chatMessage);
-            }
         } catch (Exception e) {
             System.err.println("Greska pri obradi Redis poruke: " + e.getMessage());
             e.printStackTrace();

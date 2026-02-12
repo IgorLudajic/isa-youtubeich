@@ -13,10 +13,8 @@ public class BenchmarkController {
     @Autowired
     private BenchmarkService benchmarkService;
 
-    // Putanja: GET /api/benchmark/run
     @GetMapping("/run")
     public String run() {
-        // Poziva tvoju detaljnu logiku iz BenchmarkService.java
         return benchmarkService.runBenchmark();
     }
 }

@@ -21,16 +21,13 @@ public class BenchmarkService {
 
     public String runBenchmark() {
         StringBuilder report = new StringBuilder();
-        report.append("🚀 POČINJEM DETALJAN BENCHMARK (JSON vs PROTOBUF)...\n");
+        report.append("POČINJEM DETALJAN BENCHMARK (JSON vs PROTOBUF)...\n");
 
         List<UploadEventJsonDto> events = new ArrayList<>();
         for (int i = 0; i < MESSAGE_COUNT; i++) {
             events.add(new UploadEventJsonDto("Video " + i, 1024L + i, "User" + i, System.currentTimeMillis()));
         }
 
-        // ==========================================
-        // 1. JSON MERENJE
-        // ==========================================
         long jsonTotalSerTime = 0;
         long jsonTotalDeserTime = 0;
         long jsonTotalSize = 0;
@@ -50,7 +47,7 @@ public class BenchmarkService {
 
                 long startDeser = System.nanoTime();
                 String parsedString = new String(bytes, StandardCharsets.UTF_8);
-                String[] parts = parsedString.split(","); // Simulacija rada
+                String[] parts = parsedString.split(",");
                 long endDeser = System.nanoTime();
 
                 jsonTotalDeserTime += (endDeser - startDeser);
@@ -58,9 +55,6 @@ public class BenchmarkService {
             } catch (Exception e) { e.printStackTrace(); }
         }
 
-        // ==========================================
-        // 2. PROTOBUF MERENJE
-        // ==========================================
         long protoTotalSerTime = 0;
         long protoTotalDeserTime = 0;
         long protoTotalSize = 0;
@@ -89,9 +83,6 @@ public class BenchmarkService {
             } catch (Exception e) { e.printStackTrace(); }
         }
 
-        // ==========================================
-        // IZVEŠTAJ (Računanje proseka uz double preciznost)
-        // ==========================================
 
         double avgJsonSer = (jsonTotalSerTime / (double) MESSAGE_COUNT) / 1000.0;
         double avgJsonDeser = (jsonTotalDeserTime / (double) MESSAGE_COUNT) / 1000.0;
@@ -102,7 +93,7 @@ public class BenchmarkService {
         double avgProtoSize = protoTotalSize / (double) MESSAGE_COUNT;
 
         report.append("==========================================\n");
-        report.append("📊 REZULTATI (Prosek na " + MESSAGE_COUNT + " poruka)\n");
+        report.append("REZULTATI (Prosek na " + MESSAGE_COUNT + " poruka)\n");
         report.append("==========================================\n");
         report.append(String.format("JSON Serijalizacija:   %.3f µs\n", avgJsonSer));
         report.append(String.format("PROTO Serijalizacija:  %.3f µs\n", avgProtoSer));
@@ -117,13 +108,12 @@ public class BenchmarkService {
         double sizeReduction = (1.0 - avgProtoSize / avgJsonSize) * 100;
         report.append(String.format("🏆 Protobuf je manji za %.2f%%\n", sizeReduction));
 
-        // Popravljena speedup matematika
         if (avgProtoSer < avgJsonSer) {
             double speedUp = avgJsonSer / avgProtoSer;
-            report.append(String.format("⚡ Protobuf je %.2fx brži u serijalizaciji\n", speedUp));
+            report.append(String.format("Protobuf je %.2fx brži u serijalizaciji\n", speedUp));
         } else {
             double speedUp = avgProtoSer / avgJsonSer;
-            report.append(String.format("⚡ JSON je %.2fx brži (kod ultra-malih poruka)\n", speedUp));
+            report.append(String.format("JSON je %.2fx brži (kod ultra-malih poruka)\n", speedUp));
         }
 
         return report.toString();
