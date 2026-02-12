@@ -88,3 +88,8 @@ export async function signup(data: {
     throw new Error("Signup failed");
   }
 }
+
+export async function getClientToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get("token")?.value || null;
+}

@@ -20,11 +20,16 @@ export default function LoginForm({ redirectUrl }: LoginFormProps) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      // Pozivamo login funkciju koja treba da odradi POST na /auth/login i dohvati /auth/me
       await login(data.username, data.password, redirectUrl);
-      // Redirect or handle success
+
+      /** * NAPOMENA: Ako tvoja login funkcija u lib/auth.ts već radi redirect,
+       * proveri da li ona ispravno upisuje token u localStorage.
+       * Ako i dalje dobijaš 401, problem je verovatno u lib/auth.ts fajlu.
+       */
+
     } catch (error) {
       if ((error as { message: string }).message === "NEXT_REDIRECT") {
-        // Success, redirect is happening
         return;
       }
       setError("password", {

@@ -77,7 +77,8 @@ public class UserServiceImpl implements UserService {
 
         User authenticatedUser = (User) authentication.getPrincipal();
         assert authenticatedUser != null;
-        String jwt = tokenUtils.generateToken(authenticatedUser.getUsername());
+        String jwt = tokenUtils.generateToken(authenticatedUser);
+        //String jwt = tokenUtils.generateToken(authenticatedUser.getUsername());
         long expiresIn = tokenUtils.getExpiresIn();
 
         return new UserTokenStateDto(jwt, expiresIn);

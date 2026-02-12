@@ -57,22 +57,27 @@ public class TokenUtils {
 
     // ============= Funkcije za generisanje JWT tokena =============
 
-    /**
-     * Funkcija za generisanje JWT tokena.
-     *
-     * @param username Korisničko ime korisnika kojem se token izdaje
-     * @return JWT token
-     */
-    public String generateToken(String username) {
+    public String generateToken(User user) {
         return Jwts.builder()
                 .setIssuer(APP_NAME)
-                .setSubject(username)
+                .setSubject(user.getUsername())
                 .setAudience(generateAudience())
                 .setIssuedAt(new Date())
                 .setExpiration(generateExpirationDate())
+                // 👇 KLJUČNO: Ubacujemo uloge u token
+                .claim("role", user.getAuthorities().stream()
+                        .map(authority -> authority.getAuthority())
+                        .collect(java.util.stream.Collectors.toList()))
                 .signWith(getSigningKey(), SIGNATURE_ALGORITHM).compact();
+    }
 
-        // moguce je postavljanje proizvoljnih podataka u telo JWT tokena pozivom funkcije .claim("key", value), npr. .claim("role", user.getRole())
+    public java.util.List<String> getRolesFromToken(String token) {
+        try {
+            final Claims claims = this.getAllClaimsFromToken(token);
+            return (java.util.List<String>) claims.get("role");
+        } catch (Exception e) {
+            return new java.util.ArrayList<>();
+        }
     }
 
     /**

@@ -11,6 +11,8 @@ services:
     env_file:
       - path: ../.env
         required: false
+    networks:
+      - app-network
 
   frontend-dev:
     profiles: [ "dev" ]
@@ -24,6 +26,14 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - API_BASE_URL=${API_BASE_URL:-http://app-dev:8080}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
     env_file:
       - path: ../.env
         required: false
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    name: shared-network

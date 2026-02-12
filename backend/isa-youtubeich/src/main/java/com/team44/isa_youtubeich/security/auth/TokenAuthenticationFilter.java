@@ -51,10 +51,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     // 4. Provera da li je prosledjeni token validan0
                     if (tokenUtils.validateToken(authToken, userDetails)) {
-
-                        // 5. Kreiraj autentifikaciju
+                        // Prosleđujemo userDetails konstruktoru (koji unutra mora da izvuče authorities)
                         TokenBasedAuthentication authentication = new TokenBasedAuthentication(userDetails);
                         authentication.setToken(authToken);
+                        authentication.setAuthenticated(true); // Eksplicitno potvrđujemo autentifikaciju
+
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }

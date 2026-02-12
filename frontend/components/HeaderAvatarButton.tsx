@@ -48,6 +48,11 @@ export default async function HeaderAvatarButton() {
               <span>Moj profil</span>
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuItem asChild className="bg-main/20 border-2 border-border mb-1">
+            <Link href="/testovi" className="w-full flex items-center cursor-pointer gap-2">
+              <span className="font-bold text-xs font-mono tracking-tighter">SISTEMSKI TESTOVI</span>
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
 
         {/*<DropdownMenuSeparator />*/}

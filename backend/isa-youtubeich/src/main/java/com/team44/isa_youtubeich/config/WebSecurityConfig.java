@@ -68,12 +68,14 @@ public class WebSecurityConfig {
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/videos/*/view").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
-
+                .requestMatchers("/api/benchmark/**", "/actuator/**").hasRole("ADMIN")
+                .requestMatchers("/", "/auth/**", "/public/**", "/ws/**", "/error").permitAll()
                 // TODO prosiriti po potrebi
 
                 .anyRequest().authenticated());
 
-        http.cors(cors -> cors.configure(http));
+        //http.cors(cors -> cors.configure(http));
+        http.cors(org.springframework.security.config.Customizer.withDefaults());
 
         http.csrf(AbstractHttpConfigurer::disable);
 
