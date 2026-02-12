@@ -99,6 +99,8 @@ public class VideoServiceImpl implements VideoService {
             video.setViewCount(0L);
             video.setLikes(0L);
             video.setDislikes(0L);
+            video.getLocation().setLatitude(latitude);
+            video.getLocation().setLongitude(longitude);
 
             video.setTags(tags);
             video.setFileSize(FileSize.of(videoFile.getSize()));

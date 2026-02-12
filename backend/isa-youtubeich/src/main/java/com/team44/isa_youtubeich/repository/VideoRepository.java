@@ -8,10 +8,15 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 @Repository
 public interface VideoRepository extends JpaRepository<Video, Long> {
     Page<Video> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<Video> findByUserUsernameOrderByCreatedAtDesc(String username, Pageable pageable);
+
+    List<Video> findByCreatedAtBeforeAndThumbnailUrlNotContaining(Timestamp date, String token);
 
     // JPQL annotations for avoiding race conditions upon updating denormalized counters
 
@@ -42,5 +47,5 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     Page<Video> findAllForHomeFeed(Pageable pageable);
 
     @Query("SELECT v FROM Video v WHERE v.premieresAt IS NOT NULL AND v.status IN ('SCHEDULED', 'LIVE')")
-    java.util.List<Video> findPremieresToResume();
+    List<Video> findPremieresToResume();
 }
