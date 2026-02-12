@@ -5,6 +5,7 @@ import com.team44.isa_youtubeich.domain.model.Video;
 import com.team44.isa_youtubeich.repository.UserRepository;
 import com.team44.isa_youtubeich.repository.VideoRepository;
 import com.team44.isa_youtubeich.service.VideoService;
+import com.team44.isa_youtubeich.service.VideoViewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class ViewCountTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private VideoViewService videoViewService;
+
     private Long videoId;
 
     @BeforeEach
@@ -45,7 +49,6 @@ public class ViewCountTest {
 
         Video video = new Video();
         video.setTitle("Concurrency Test Video");
-        video.setViewCount(0L); // Počinjemo od nule
         video.setUser(user);
 
         Video savedVideo = videoRepository.save(video);
@@ -60,7 +63,7 @@ public class ViewCountTest {
         for (int i = 0; i < numberOfThreads; i++) {
             executorService.submit(() -> {
                 try {
-                    videoService.incrementViews(videoId);
+                    videoService.enqueueView(videoId, "videoViewService");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -72,8 +75,8 @@ public class ViewCountTest {
 
         Video updatedVideo = videoRepository.findById(videoId).orElseThrow();
 
-        assertEquals(100L, updatedVideo.getViewCount());
+        assertEquals(100L, videoViewService.getViewCount(updatedVideo.getId()));
 
-        System.out.println("\nOčekivano pregleda: 100 | Dobijeno: " + updatedVideo.getViewCount() + "\n");
+        System.out.println("\nOčekivano pregleda: 100 | Dobijeno: " + videoViewService.getViewCount(updatedVideo.getId()) + "\n");
     }
 }
