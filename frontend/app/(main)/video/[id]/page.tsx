@@ -8,6 +8,10 @@ import VideoChat from "@/components/VideoChat";
 import { getProfile } from "@/lib/auth";
 import { i18n } from "@/lib/i18n";
 import Link from "next/link";
+import HlsVideoPlayer from "@/components/HlsVideoPlayer";
+import LocalTime from "@/components/LocalTime";
+import LocalDate from "@/components/LocalDate";
+import { Calendar } from "@carbon/icons-react";
 
 export default async function VideoPage({
   params,
@@ -24,13 +28,10 @@ export default async function VideoPage({
   const { commentPage } = await searchParams;
   const page = commentPage ? parseInt(commentPage) : 0;
 
-  // Učitavamo video i profil paralelno da ne bismo kočili renderovanje
-  const [video, profile] = await Promise.all([
-    getVideoDetails(id).catch(() => null),
-    getProfile().catch(() => null),
-  ]);
-
-  if (!video) {
+  let video;
+  try {
+    video = await getVideoDetails(id);
+  } catch {
     notFound();
   }
 
@@ -38,87 +39,94 @@ export default async function VideoPage({
   const chatUsername = profile?.username || `Gost_${Math.floor(Math.random() * 1000)}`;
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen">
       <ViewTracker videoId={id} />
-
-      {/* Glavni kontejner sa gridom: 3 kolone na desktopu, 1 na mobilnom */}
-      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-        {/* LEVA KOLONA: Video, Info i Komentari (Zauzima 3/4 na desktopu) */}
-        <div className="lg:col-span-3 space-y-6">
-
-          {/* Video Player Section */}
-          <div className="aspect-video bg-black rounded-lg overflow-hidden relative z-10 border-2 border-border shadow-xl">
-            <video controls className="w-full h-full" poster={video.thumbnailUrl}>
+      <div className="max-w-4xl mx-auto">
+        <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative z-10 border">
+          {video.isLive ? (
+            <HlsVideoPlayer
+              autoPlay
+              className="w-full h-full"
+              poster={video.thumbnailUrl}
+              src={getFullUrl(`/api/videos/${id}/stream`)}
+            />
+          ) : (
+            <video
+              controls
+              className="w-full h-full"
+              poster={video.thumbnailUrl}
+            >
               <source
                 src={getFullUrl(`/api/videos/${id}/stream`)}
                 type="video/mp4"
               />
-              Vaš pretraživač ne podržava video tag.
+              Your browser does not support the video tag.
             </video>
-          </div>
+          )}
+        </div>
 
-          {/* Video Info Section */}
-          <div className="bg-background p-6 rounded-base border-2 border-border shadow-shadow relative z-0">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-border/10 pb-4">
-              <h1 className="text-2xl font-heading break-all">{video.title}</h1>
-              <span className="text-xl font-[600] whitespace-nowrap bg-main/10 px-3 py-1 rounded-base border-border border-2">
-                {video.viewCount} {i18n.views(video.viewCount)}
+        <div className="bg-background shadow-background shadow-[0_0_50px_50px] z-0">
+          {video.isUpcoming && (
+            <div className="flex items-center rounded-base border-[1.5px] border-teal-600 bg-teal-300/20 p-3 mb-5 shadow-[1px_1px_0px_0px] shadow-teal-600">
+              {" "}
+              <span className="font-[450] mr-1.5">
+                Ovaj snimak će se premijerno pustiti tek u
               </span>
+              <span className="text-teal-800 font-semibold flex items-center gap-1">
+                <Calendar className="-mr-0.5" />
+                <span>
+                  <LocalTime date={video.premieresAt + "Z"} />,
+                </span>
+                <LocalDate date={video.premieresAt + "Z"} />
+              </span>
+              {/*<Button*/}
+              {/*  size="sm"*/}
+              {/*  variant="noShadow"*/}
+              {/*  className="ml-auto bg-teal-600/10 hover:bg-teal-600/20 text-gray-800 border-1 border-teal-600"*/}
+              {/*>*/}
+              {/*  Otkaži i objavi odmah*/}
+              {/*</Button>*/}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-heading">{video.title}</h1>
+            <span className="text-xl font-[600] ">
+              {video.viewCount} {i18n.views(video.viewCount)}
+            </span>
+          </div>
+
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <Link
+                href={`/profiles/${video.creatorUsername}`}
+                className="text-lime-700 font-mono font-[600] hover:underline"
+              >
+                @{video.creatorUsername}
+              </Link>
+              <p className="text-sm text-stone-500 mt-1">
+                Objavljeno{" "}
+                <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+              </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between mt-6 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col">
-                  <Link
-                    href={`/profiles/${video.creatorUsername}`}
-                    className="text-lime-700 font-mono font-[700] text-lg hover:underline decoration-2"
-                  >
-                    @{video.creatorUsername}
-                  </Link>
-                  <p className="text-xs text-stone-500 font-medium">
-                    Objavljeno {new Date(video.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 items-center">
-                <LikeDislikeButtons
-                  videoId={id}
-                  initialLikes={video.likes}
-                  initialDislikes={video.dislikes}
-                  initialLiked={video.likedByCurrentUser}
-                  initialDisliked={video.dislikedByCurrentUser}
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-secondary-background rounded-base border-2 border-border/50 text-sm leading-relaxed whitespace-pre-wrap">
-              {video.description}
+            <div className="flex gap-2 text-sm pt-2">
+              <LikeDislikeButtons
+                videoId={id}
+                initialLikes={video.likes}
+                initialDislikes={video.dislikes}
+                initialLiked={video.likedByCurrentUser}
+                initialDisliked={video.dislikedByCurrentUser}
+              />
             </div>
           </div>
 
-          {/* Komentari - sada su ispod video opisa */}
-          <div className="mt-8">
-            <CommentsList videoId={id} page={page} />
-          </div>
+          <div>{video.description}</div>
         </div>
 
-        {/* DESNA KOLONA: Čat uživo (Zauzima 1/4 na desktopu) */}
-        <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-24">
-             <VideoChat videoId={id} username={chatUsername} />
-
-             {/* Mali info box za odbranu - Profesori ovo vole da vide */}
-             <div className="mt-4 p-4 border-2 border-dashed border-stone-400 rounded-base bg-amber-50 text-[10px] text-stone-600 font-mono leading-tight">
-               <p className="font-bold text-amber-800 mb-1">⚙️ CLUSTER MODE ACTIVE</p>
-               <p>• WebSocket: STOMP Protocol</p>
-               <p>• Sync: Redis Pub/Sub</p>
-               <p>• Logic: Transient (No History)</p>
-             </div>
-          </div>
+        <div className="mt-12">
+          <CommentsList videoId={id} page={page} />
         </div>
-
       </div>
     </div>
   );

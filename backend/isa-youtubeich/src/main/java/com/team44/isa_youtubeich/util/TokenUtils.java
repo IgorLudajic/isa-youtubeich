@@ -28,9 +28,10 @@ public class TokenUtils {
     @Value("somesecret-key-for-jwt-token-has-to-be-512-bits-long-1234567890123456789")
     public String SECRET;
 
-    // Period vazenja tokena - 30 minuta
-    @Value("1800000")
-    private int EXPIRES_IN;
+    // Period vazenja tokena - default 24h
+    // (property is in milliseconds)
+    @Value("${app.jwt.expires-in-ms:86400000}")
+    private long EXPIRES_IN;
 
     // Naziv headera kroz koji ce se prosledjivati JWT u komunikaciji server-klijent
     @Value("Authorization")

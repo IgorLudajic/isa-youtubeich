@@ -52,6 +52,11 @@ public class Video implements Serializable {
     @Getter @Setter
     private LocalDateTime premieresAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    @Getter @Setter
+    private VideoStatus status = VideoStatus.ENDED;
+
     @Embedded
     @Column(name = "file_size")
     @Getter @Setter
