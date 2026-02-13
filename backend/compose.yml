@@ -47,10 +47,13 @@ services:
       sh -c "apk add --no-cache ffmpeg && ./mvnw spring-boot:run
       -Dspring-boot.run.profiles=${SPRING_PROFILES_ACTIVE:-dev}
       -Dspring-boot.run.fork=false
+      -Dmaven.repo.local=/tmp/maven/.m2/repository
       -Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'"
     environment:
       HOME: /tmp/maven
       MAVEN_CONFIG: /tmp/maven/.m2
+      # Point Maven explicitly to the volume-backed directory
+      MAVEN_OPTS: "-Dmaven.repo.local=/tmp/maven/.m2/repository"
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-youtubeich}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
@@ -67,7 +70,7 @@ services:
         condition: on-failure
     volumes:
       - ./isa-youtubeich:/workspace:ro
-      - maven-repo:/tmp/maven
+      - maven-repo:/tmp/maven/.m2/repository
       # Host build output so DevTools restarts as soon as IntelliJ compiles.
       - ./isa-youtubeich/target:/workspace/target
       - uploads:/workspace/uploads
