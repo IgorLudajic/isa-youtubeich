@@ -1,6 +1,7 @@
 package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.*;
+import com.team44.isa_youtubeich.dto.TranscodingJobDto;
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.dto.VideoStreamResolutionDto;
@@ -14,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +54,12 @@ public class VideoServiceImpl implements VideoService {
 
     @Autowired
     private VideoViewService videoViewService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private final String UPLOAD_DIR = "uploads/";
     private final String VIDEO_DIR = "uploads/videos/";
@@ -89,6 +98,8 @@ public class VideoServiceImpl implements VideoService {
             video.setUser(user);
             video.setLikes(0L);
             video.setDislikes(0L);
+            video.getLocation().setLatitude(latitude);
+            video.getLocation().setLongitude(longitude);
 
             video.setTags(tags);
             video.setFileSize(FileSize.of(videoFile.getSize()));
@@ -96,11 +107,14 @@ public class VideoServiceImpl implements VideoService {
             if (premieresAt != null && !premieresAt.isBlank()) {
                 LocalDateTime localDateTime = LocalDateTime.parse(premieresAt);
                 video.setPremieresAt(localDateTime);
-                video.setStatus(VideoStatus.SCHEDULED);
+                //video.setStatus(VideoStatus.SCHEDULED);
             } else {
                 video.setPremieresAt(null);
-                video.setStatus(VideoStatus.ENDED);
+                //video.setStatus(VideoStatus.ENDED);
             }
+
+            video.setStatus(VideoStatus.PROCESSING);
+
             if (latitude != null && longitude != null) {
                 video.setLocation(new GeoLocation(latitude, longitude));
             } else {
@@ -118,8 +132,13 @@ public class VideoServiceImpl implements VideoService {
             savedVideo.setVideoUrl(staticVideoPath);
             savedVideo = videoRepository.save(savedVideo);
 
-            if (savedVideo.getStatus() == VideoStatus.SCHEDULED) {
-                livestreamService.schedulePremiere(savedVideo.getId(), savedVideo.getPremieresAt());
+            try{
+                TranscodingJobDto job = new TranscodingJobDto(savedVideo.getId(), staticVideoPath);
+                String jobJson = objectMapper.writeValueAsString(job);
+                redisTemplate.opsForList().rightPush("transcoding:queue", jobJson);
+            }
+            catch(Exception ex){
+                throw new RuntimeException("Failed to queue transcoding job", ex);
             }
 
             return savedVideo;
