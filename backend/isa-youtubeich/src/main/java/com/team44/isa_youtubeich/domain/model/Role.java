@@ -7,17 +7,19 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
 @Entity
-@Table(name="ROLE")
+@Table(name = "ROLE")
 public class Role implements GrantedAuthority {
 
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter @Setter
+    @Getter
+    @Setter
     Long id;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     String name;
 
     @Override

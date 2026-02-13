@@ -11,6 +11,7 @@ export interface Profile {
   surname: string;
   username: string;
   avatarUrl?: string;
+  roles: string[];
 }
 
 export async function login(
@@ -59,6 +60,7 @@ export async function getProfile(): Promise<Profile | null> {
     surname: user.surname,
     username: user.username,
     avatarUrl: user.avatarUrl,
+    roles: user.roles || [],
   };
 }
 
@@ -87,4 +89,9 @@ export async function signup(data: {
   if (!res.ok) {
     throw new Error("Signup failed");
   }
+}
+
+export async function getClientToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get("token")?.value || null;
 }

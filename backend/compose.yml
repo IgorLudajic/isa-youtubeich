@@ -20,9 +20,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_started
     env_file:
       - path: ../.env
         required: false
+    networks:
+      - app-network
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app-network
 
   app-dev:
     profiles: [ "dev" ]
@@ -47,8 +62,12 @@ services:
       SERVER_PORT: 8080
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
     deploy:
       replicas: 2
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./isa-youtubeich:/workspace:ro
       - maven-repo:/tmp/maven/.m2/repository
@@ -62,10 +81,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_started
+    healthcheck:
+      test: "curl --fail http://localhost:8080/actuator/health || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     env_file:
       - path: ../.env
         required: false
-
+    networks:
+      - app-network
   db:
     image: postgres:18.1-alpine
     restart: unless-stopped
@@ -82,11 +110,16 @@ services:
       retries: 5
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
+    networks:
+      - app-network
+
   redis:
     image: redis:8-alpine
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - app-network
 
   nginx:
     profiles: [ "prod" ]
@@ -97,6 +130,8 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
+    networks:
+      - app-network
 
   nginx-dev:
     profiles: [ "dev" ]
@@ -107,8 +142,15 @@ services:
       - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app-dev
+    networks:
+      - app-network
 
 volumes:
   db-data:
   maven-repo:
   uploads:
+
+networks:
+  app-network:
+    driver: bridge
+    name: shared-network

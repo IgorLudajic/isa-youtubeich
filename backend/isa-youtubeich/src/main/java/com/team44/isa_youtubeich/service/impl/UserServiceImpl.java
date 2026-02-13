@@ -78,7 +78,8 @@ public class UserServiceImpl implements UserService {
 
         User authenticatedUser = (User) authentication.getPrincipal();
         assert authenticatedUser != null;
-        String jwt = tokenUtils.generateToken(authenticatedUser.getUsername());
+        String jwt = tokenUtils.generateToken(authenticatedUser);
+        //String jwt = tokenUtils.generateToken(authenticatedUser.getUsername());
         long expiresIn = tokenUtils.getExpiresIn();
 
         return new UserTokenStateDto(jwt, expiresIn);
@@ -167,6 +168,12 @@ public class UserServiceImpl implements UserService {
             dto.setStreet(user.getAddressJson().getStreet());
             dto.setCity(user.getAddressJson().getCity());
             dto.setCountry(user.getAddressJson().getCountry());
+        }
+
+        if (user.getRoles() != null) {
+            dto.setRoles(user.getRoles().stream()
+                    .map(role -> role.getName())
+                    .toList());
         }
 
         return dto;
