@@ -69,6 +69,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/videos/*/view").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/watch-party/**").permitAll()
+                .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/api/benchmark/**", "/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/", "/auth/**", "/public/**", "/ws/**", "/error").permitAll()
                 // TODO prosiriti po potrebi

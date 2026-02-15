@@ -98,8 +98,11 @@ public class VideoServiceImpl implements VideoService {
             video.setUser(user);
             video.setLikes(0L);
             video.setDislikes(0L);
-            video.getLocation().setLatitude(latitude);
-            video.getLocation().setLongitude(longitude);
+
+            if(latitude != null && longitude != null){
+                GeoLocation loc = new GeoLocation(latitude, longitude);
+                video.setLocation(loc);
+            }
 
             video.setTags(tags);
             video.setFileSize(FileSize.of(videoFile.getSize()));
@@ -168,7 +171,7 @@ public class VideoServiceImpl implements VideoService {
                         video.getId(),
                         video.getTitle(),
                         // IZMENA: Vraćamo URL ka kontroleru, ne putanju sa diska!
-                        API_BASE_URL + "/" + video.getId() + "/thumbnail",
+                         "/api/videos/" + video.getId() + "/thumbnail",
                         videoViewService.getViewCount(video.getId()),
                         video.getLikes(),
                         video.getDislikes(),
@@ -190,7 +193,7 @@ public class VideoServiceImpl implements VideoService {
                 video.getTitle(),
                 video.getDescription(),
                 // IZMENA: Vraćamo URL ka kontroleru
-                API_BASE_URL + "/" + video.getId() + "/thumbnail",
+                "/api/videos/" + video.getId() + "/thumbnail",
                 videoViewService.getViewCount(video.getId()),
                 video.getLikes(),
                 video.getDislikes(),
@@ -288,7 +291,7 @@ public class VideoServiceImpl implements VideoService {
 
         Path mp4Path = Paths.get(VIDEO_DIR, id + ".mp4");
         // IMPORTANT: MP4 must be served via controller to enforce VideoStatus.ENDED.
-        String mp4Url = API_BASE_URL + "/" + id + "/mp4";
+        String mp4Url = "/api/videos/" + id + "/mp4";
 
         boolean hlsExists = Files.exists(hlsPlaylistPath);
         boolean mp4Exists = Files.exists(mp4Path);

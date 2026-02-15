@@ -1,22 +1,25 @@
 import VideoCard from "./VideoCard";
-import HomeFeedPagination from "./HomeFeedPagination";
+import HomeFeedPagination from "./HomeFeedPagination";"@/lib/videofeed"
+import { VideoHomeDto } from "@/lib/videofeed"
 
 interface VideoGridProps {
   videos: any[];
-  currentPage: number;
-  totalPages: number;
+  currentPage?: number;
+  totalPages?: number;
+  onSelect?: (video: VideoHomeDto) => void;
+  children?: React.ReactNode;
 }
 
 export default function VideoGrid({
   videos,
-  currentPage,
-  totalPages,
+  onSelect,
+  children,
 }: VideoGridProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 homefeed-grid md:mx-0! md:flex flex-wrap bg-background shadow-background shadow-[0_0_50px_70px] rounded-full">
         {videos.map((video) => (
-          <VideoCard key={video.Id} video={video} />
+          <VideoCard key={video.Id} video={video} onSelect={onSelect} />
         ))}
       </div>
       <style>{`
@@ -29,7 +32,7 @@ export default function VideoGrid({
           }
         }
       `}</style>
-      <HomeFeedPagination currentPage={currentPage} totalPages={totalPages} />
+      {children}
     </div>
   );
 }
