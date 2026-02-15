@@ -2,6 +2,7 @@ import { getHomeFeed } from "@/lib/videofeed";
 import VideoGrid from "./VideoGrid";
 import PopularVideos from "@/components/PopularVideos";
 import ActiveWatchParties from "./ActiveWatchParties";
+import HomeFeedPagination from "./HomeFeedPagination";
 
 interface HomeFeedProps {
   page?: number;
@@ -16,11 +17,11 @@ export default async function HomeFeed({ page = 0, size = 10 }: HomeFeedProps) {
         <ActiveWatchParties />
         <PopularVideos />
         <h2 className="text-2xl font-bold mb-4">Najnoviji snimci</h2>
-        <VideoGrid
-            videos={feed.content}
-            currentPage={feed.number}
-            totalPages={feed.totalPages}
-        />
+        <VideoGrid videos={feed.content}>
+            <HomeFeedPagination
+              currentPage={feed.number}
+              totalPages={feed.totalPages} />
+        </VideoGrid>
     </div>
   );
 }
