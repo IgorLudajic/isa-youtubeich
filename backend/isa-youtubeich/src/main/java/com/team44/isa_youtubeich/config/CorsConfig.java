@@ -22,8 +22,8 @@ public class CorsConfig {
 
         // Allow frontend dev server(s) and HLS.js/XHR playback.
         // Using allowedOriginPatterns("*") keeps it simple for local dev without credentials.
-        //config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
+        config.setAllowedOriginPatterns(List.of("*"));
+        //config.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
         config.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

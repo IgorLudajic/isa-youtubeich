@@ -6,13 +6,14 @@ import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { DotMark } from "@carbon/icons-react";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/api" || "http://localhost:8080/api";
 
 interface VideoCardProps {
   video: VideoHomeDto;
+  onSelect?: (video: VideoHomeDto) => void;
 }
 
-export default function VideoCard({ video }: VideoCardProps) {
+export default function VideoCard({ video, onSelect }: VideoCardProps) {
   const thumbnailUrl = `${API_BASE_URL}/videos/${video.Id}/thumbnail`;
   const getVideoStatus = () => {
     if (video.isLive) {
@@ -41,9 +42,8 @@ export default function VideoCard({ video }: VideoCardProps) {
     }
     return <LocalDate date={video.createdAt} />;
   };
-  return (
-    <Link href={`/video/${video.Id}`}>
-      <ImageCard imageUrl={thumbnailUrl} className="cursor-pointer">
+
+  const CardContent = (<ImageCard imageUrl={thumbnailUrl} className="cursor-pointer">
         <h3 className="text-lg line-clamp-2 font-heading leading-none pb-0.25">
           {video.title}
         </h3>
@@ -62,6 +62,15 @@ export default function VideoCard({ video }: VideoCardProps) {
           </span>
         </div>
       </ImageCard>
+    );
+
+    if(onSelect){
+      return <div onClick={() => onSelect(video)}>{CardContent}</div>
+    }
+
+  return (
+    <Link href={`/video/${video.Id}`}>
+      {CardContent}
     </Link>
   );
 }
