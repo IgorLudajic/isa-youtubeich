@@ -32,6 +32,9 @@ public class WebSecurityConfig {
     @Autowired
     private TokenUtils tokenUtils;
 
+    @Autowired
+    private ActiveUsersMetricsConfig activeUsersMetricsConfig;
+
     @Bean
     public UserDetailsService userDetailsService(){
         return new UserDetailsServiceImpl();
@@ -63,21 +66,27 @@ public class WebSecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/videos/*/view").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/watch-party/**").permitAll()
+                .requestMatchers("/api/benchmark/**").hasRole("ADMIN")
+                .requestMatchers("/", "/auth/**", "/public/**", "/ws/**", "/error").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
 
                 // TODO prosiriti po potrebi
 
                 .anyRequest().authenticated());
 
-        http.cors(cors -> cors.configure(http));
+        //http.cors(cors -> cors.configure(http));
+        http.cors(org.springframework.security.config.Customizer.withDefaults());
 
         http.csrf(AbstractHttpConfigurer::disable);
 
-        http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService()), BasicAuthenticationFilter.class);
+        http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService(), activeUsersMetricsConfig), BasicAuthenticationFilter.class);
 
         http.authenticationProvider(authenticationProvider());
 

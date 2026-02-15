@@ -12,6 +12,9 @@ export interface VideoHomeDto {
   dislikes: number;
   createdAt: string;
   creatorUsername: string;
+  isUpcoming: boolean;
+  isLive: boolean;
+  premieresAt: string;
 }
 
 export interface VideoDetailsDto {
@@ -26,6 +29,9 @@ export interface VideoDetailsDto {
   dislikedByCurrentUser: boolean;
   createdAt: string;
   creatorUsername: string;
+  premieresAt: string;
+  isUpcoming: boolean;
+  isLive: boolean;
 }
 
 export interface CommentDto {
@@ -33,6 +39,18 @@ export interface CommentDto {
   text: string;
   username: string;
   createdAt: string;
+}
+
+export interface VideoPopularityDto {
+  videoId: number;
+  title: string;
+  thumbnailUrl: string;
+  viewCount: number;
+  likes: number;
+  dislikes: number;
+  createdAt: string;
+  creatorUsername: string;
+  score: number;
 }
 
 export interface Page<T> {
@@ -149,4 +167,30 @@ export async function viewVideo(id: number): Promise<void> {
   await fetch(`${baseUrl}/api/videos/${id}/view`, {
     method: "POST",
   });
+}
+
+export async function getLatestPopularity(): Promise<VideoPopularityDto[]> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) {
+    redirect("/login");
+  }
+  const res = await fetch(`${baseUrl}/api/popularity/latest`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch latest popularity");
+  return res.json();
+}
+
+export async function forceRunPopularityPipeline(): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) {
+    redirect("/login");
+  }
+  const res = await fetch(`${baseUrl}/api/popularity/run`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to run popularity pipeline");
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -21,4 +22,7 @@ public class VideoDetailsDto {
     private Boolean dislikedByCurrentUser;
     private Date createdAt;
     private String creatorUsername;
+    private LocalDateTime premieresAt;
+    private Boolean isUpcoming;
+    private Boolean isLive;
 }

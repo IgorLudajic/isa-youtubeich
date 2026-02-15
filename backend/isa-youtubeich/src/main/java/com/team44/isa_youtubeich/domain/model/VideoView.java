@@ -7,7 +7,7 @@ import lombok.Setter;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "VIDEO_VIEWS")
+@Table(name = "VIDEO_VIEWS", indexes = @Index(columnList = "viewed_at"))
 @Getter @Setter
 public class VideoView {
 

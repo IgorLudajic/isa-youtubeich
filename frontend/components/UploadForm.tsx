@@ -61,6 +61,14 @@ export default function UploadForm() {
     }
 
     try {
+      // Convert premieresAt from local time to UTC if present
+      const premieresAt = formData.get("premieresAt") as string;
+      if (premieresAt) {
+        const localDate = new Date(premieresAt);
+        const utcString = localDate.toISOString().slice(0, -1);
+        formData.set("premieresAt", utcString);
+      }
+
       await uploadVideo(formData);
       alert(
         "Video je uspešno postavljen! \nBićete preusmereni na početnu stranu.",

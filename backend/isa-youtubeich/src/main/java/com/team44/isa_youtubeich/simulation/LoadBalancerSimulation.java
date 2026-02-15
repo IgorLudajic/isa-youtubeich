@@ -59,7 +59,7 @@ public class LoadBalancerSimulation {
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
                 if (response.statusCode() == 200) {
-                    System.out.println("✅ Server je odgovorio (200 OK)! Spreman za akciju.");
+                    System.out.println("Server je odgovorio (200 OK)! Spreman za akciju.");
                     return true;
                 } else {
                     System.out.print(".");

@@ -9,13 +9,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Logout, User } from "@carbon/icons-react";
+import { Logout, User, Terminal } from "@carbon/icons-react";
 import Link from "next/link";
 
 export default async function HeaderAvatarButton() {
   const profile = await getProfile();
 
   if (!profile) return <LoginButton />;
+
+  const isAdmin = profile.roles && profile.roles.includes("ROLE_ADMIN");
 
   return (
     <DropdownMenu modal={false}>
@@ -34,8 +36,8 @@ export default async function HeaderAvatarButton() {
             </span>
           </div>
         </DropdownMenuLabel>
-        {/*<DropdownMenuSeparator />*/}
-        <DropdownMenuGroup className="mb-1">
+
+        <DropdownMenuGroup className="mb-1 space-y-1">
           <DropdownMenuItem
             asChild
             className="bg-background border-2 border-border hover:bg-main"
@@ -48,9 +50,23 @@ export default async function HeaderAvatarButton() {
               <span>Moj profil</span>
             </Link>
           </DropdownMenuItem>
+
+          {isAdmin && (
+            <DropdownMenuItem
+              asChild
+              className="bg-background border-2 border-border hover:bg-main"
+            >
+              <Link
+                href="/testovi"
+                className="w-full flex items-center cursor-pointer gap-2"
+              >
+                <Terminal /> {/* Ikonica za testove */}
+                <span>Sistemski testovi</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
 
-        {/*<DropdownMenuSeparator />*/}
         <DropdownMenuGroup>
           <form method="post" action="/logout">
             <DropdownMenuItem

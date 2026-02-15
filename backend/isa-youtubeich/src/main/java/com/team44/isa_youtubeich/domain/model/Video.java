@@ -38,11 +38,6 @@ public class Video implements Serializable {
     @Getter @Setter
     private String description;
 
-    @Deprecated(forRemoval = true)
-    @Column(columnDefinition = "bigint default 0")
-    @Getter @Setter
-    private Long viewCount = 0L;
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "VIDEO_TAGS")
     @Getter @Setter
@@ -51,6 +46,11 @@ public class Video implements Serializable {
     @Column(name = "premieres_at")
     @Getter @Setter
     private LocalDateTime premieresAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    @Getter @Setter
+    private VideoStatus status = VideoStatus.ENDED;
 
     @Embedded
     @Column(name = "file_size")

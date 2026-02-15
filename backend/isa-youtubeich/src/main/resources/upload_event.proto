@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package com.team44.isa_youtubeich.protobuf;
+
+option java_package = "com.team44.isa_youtubeich.protobuf";
+option java_outer_classname = "UploadEventProto";
+
+message UploadEvent {
+  string videoTitle = 1;
+  int64 fileSize = 2;
+  string author = 3;
+  int64 timestamp = 4;
+}
