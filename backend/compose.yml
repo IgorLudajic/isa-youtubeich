@@ -136,6 +136,8 @@ services:
       - "${PROMETHEUS_PORT:-9090}:9090"
     depends_on:
       - nginx-dev
+    networks:
+      - app-network
 
   grafana:
     profiles: [ "dev" ]
@@ -153,6 +155,8 @@ services:
       - "${GRAFANA_PORT:-3001}:3000"
     depends_on:
       - prometheus
+    networks:
+      - app-network
 
   prometheus-prod:
     profiles: [ "prod" ]
@@ -169,6 +173,8 @@ services:
       - "${PROMETHEUS_PORT:-9090}:9090"
     depends_on:
       - nginx
+    networks:
+      - app-network
 
   grafana-prod:
     profiles: [ "prod" ]
@@ -186,6 +192,8 @@ services:
       - "${GRAFANA_PORT:-3001}:3000"
     depends_on:
       - prometheus-prod
+    networks:
+      - app-network
 
   nginx:
     profiles: [ "prod" ]
