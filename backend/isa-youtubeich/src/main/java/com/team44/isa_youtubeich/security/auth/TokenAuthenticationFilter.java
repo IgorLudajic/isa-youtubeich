@@ -1,5 +1,6 @@
 package com.team44.isa_youtubeich.security.auth;
 
+import com.team44.isa_youtubeich.config.ActiveUsersMetricsConfig;
 import com.team44.isa_youtubeich.util.TokenUtils;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -21,11 +22,14 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private UserDetailsService userDetailsService;
 
+    private ActiveUsersMetricsConfig activeUsersMetricsConfig;
+
     protected final Log LOGGER = LogFactory.getLog(getClass());
 
-    public TokenAuthenticationFilter(TokenUtils tokenHelper, UserDetailsService userDetailsService) {
+    public TokenAuthenticationFilter(TokenUtils tokenHelper, UserDetailsService userDetailsService, ActiveUsersMetricsConfig activeUsersMetricsConfig) {
         this.tokenUtils = tokenHelper;
         this.userDetailsService = userDetailsService;
+        this.activeUsersMetricsConfig = activeUsersMetricsConfig;
     }
 
     @Override
@@ -50,6 +54,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                         authentication.setAuthenticated(true);
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                        // 6. Record user activity for metrics
+                        if (activeUsersMetricsConfig != null) {
+                            activeUsersMetricsConfig.recordUserActivity(username);
+                        }
                     }
                 }
             }

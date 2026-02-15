@@ -32,6 +32,9 @@ public class WebSecurityConfig {
     @Autowired
     private TokenUtils tokenUtils;
 
+    @Autowired
+    private ActiveUsersMetricsConfig activeUsersMetricsConfig;
+
     @Bean
     public UserDetailsService userDetailsService(){
         return new UserDetailsServiceImpl();
@@ -70,9 +73,10 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/videos/*/view").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/watch-party/**").permitAll()
-                .requestMatchers("/actuator/health/**").permitAll()
-                .requestMatchers("/api/benchmark/**", "/actuator/**").hasRole("ADMIN")
+                .requestMatchers("/api/benchmark/**").hasRole("ADMIN")
                 .requestMatchers("/", "/auth/**", "/public/**", "/ws/**", "/error").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+
                 // TODO prosiriti po potrebi
 
                 .anyRequest().authenticated());
@@ -82,7 +86,7 @@ public class WebSecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable);
 
-        http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService()), BasicAuthenticationFilter.class);
+        http.addFilterBefore(new TokenAuthenticationFilter(tokenUtils, userDetailsService(), activeUsersMetricsConfig), BasicAuthenticationFilter.class);
 
         http.authenticationProvider(authenticationProvider());
 
