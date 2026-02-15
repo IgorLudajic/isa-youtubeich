@@ -2,6 +2,7 @@ package com.team44.isa_youtubeich.service.impl;
 
 import com.team44.isa_youtubeich.domain.model.*;
 import com.team44.isa_youtubeich.dto.TranscodingJobDto;
+import com.team44.isa_youtubeich.dto.UploadEventJsonDto; // 👈 NOVO
 import com.team44.isa_youtubeich.dto.VideoDetailsDto;
 import com.team44.isa_youtubeich.dto.VideoHomeDto;
 import com.team44.isa_youtubeich.dto.VideoStreamResolutionDto;
@@ -11,6 +12,7 @@ import com.team44.isa_youtubeich.service.LivestreamService;
 import com.team44.isa_youtubeich.service.VideoService;
 import com.team44.isa_youtubeich.service.VideoViewService;
 import jakarta.transaction.Transactional;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -19,6 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,6 +63,11 @@ public class VideoServiceImpl implements VideoService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     private final String UPLOAD_DIR = "uploads/";
     private final String VIDEO_DIR = "uploads/videos/";
@@ -144,6 +152,25 @@ public class VideoServiceImpl implements VideoService {
                 throw new RuntimeException("Failed to queue transcoding job", ex);
             }
 
+            try {
+                UploadEventJsonDto event = new UploadEventJsonDto(
+                        savedVideo.getTitle(),
+                        videoFile.getSize(),
+                        username,
+                        System.currentTimeMillis()
+                );
+
+                byte[] messageBytes = jsonMapper.writeValueAsBytes(event);
+
+                rabbitTemplate.convertAndSend("benchmark_queue", messageBytes);
+
+                System.out.println("RabbitMQ: Event poslat za video: " + savedVideo.getTitle());
+
+            } catch (Exception e) {
+                System.err.println("Upozorenje: Nije uspelo slanje poruke na RabbitMQ: " + e.getMessage());
+                e.printStackTrace();
+            }
+
             return savedVideo;
 
         } catch (Exception e) {
@@ -170,8 +197,7 @@ public class VideoServiceImpl implements VideoService {
                 .map(video -> new VideoHomeDto(
                         video.getId(),
                         video.getTitle(),
-                        // IZMENA: Vraćamo URL ka kontroleru, ne putanju sa diska!
-                         "/api/videos/" + video.getId() + "/thumbnail",
+                        "/api/videos/" + video.getId() + "/thumbnail",
                         videoViewService.getViewCount(video.getId()),
                         video.getLikes(),
                         video.getDislikes(),
@@ -192,7 +218,6 @@ public class VideoServiceImpl implements VideoService {
                 video.getId(),
                 video.getTitle(),
                 video.getDescription(),
-                // IZMENA: Vraćamo URL ka kontroleru
                 "/api/videos/" + video.getId() + "/thumbnail",
                 videoViewService.getViewCount(video.getId()),
                 video.getLikes(),
@@ -240,8 +265,6 @@ public class VideoServiceImpl implements VideoService {
     @Override
     @Cacheable("thumbnails")
     public byte[] getThumbnailContent(Long id) {
-        // System.out.println("DISK OPERACIJA: Učitavam sliku " + id + " sa hard diska...");
-
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Video nije pronađen"));
 
