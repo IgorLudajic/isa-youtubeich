@@ -21,7 +21,11 @@ export default async function PopularVideos() {
   }
 
   if (popularVideos.length === 0) {
-    return null;
+    return (
+      <>
+        <ForceEtlButton />
+      </>
+    )
   }
 
   const colors = ["text-yellow-500", "text-gray-500/80", "text-yellow-700"];

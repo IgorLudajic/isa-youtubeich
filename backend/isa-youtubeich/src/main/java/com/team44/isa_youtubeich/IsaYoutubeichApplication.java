@@ -4,6 +4,9 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
+import jakarta.annotation.PostConstruct;
+
+import java.util.TimeZone;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -16,4 +19,8 @@ public class IsaYoutubeichApplication {
 		SpringApplication.run(IsaYoutubeichApplication.class, args);
 	}
 
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Belgrade"));
+    }
 }

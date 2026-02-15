@@ -13,8 +13,15 @@ RUN mvn -B -DskipTests package
 FROM ${TEMURIN_JRE_IMAGE} AS runtime
 ENV SPRING_PROFILES_ACTIVE=prod \
     SERVER_PORT=8080
+
+# Install ffmpeg for HLS transcoding.
+# (Temurin images are Debian-based; keep layers small by cleaning apt lists.)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && ffmpeg -version
+
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","app.jar"]
-

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourcePerFileMappings">
-    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/689d4dc7-3324-4bc9-a251-c2e820ae4950/console.sql" value="689d4dc7-3324-4bc9-a251-c2e820ae4950" />
     <file url="file://$PROJECT_DIR$/backend/isa-youtubeich/src/main/resources/data.sql" value="689d4dc7-3324-4bc9-a251-c2e820ae4950" />
   </component>
 </project>

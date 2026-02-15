@@ -11,6 +11,8 @@ services:
     env_file:
       - path: ../.env
         required: false
+    networks:
+      - app-network
 
   frontend-dev:
     profiles: [ "dev" ]
@@ -20,10 +22,25 @@ services:
       sh -c "bun install && bun run dev"
     volumes:
       - ./:/workspace
+      - bun-cache:/root/.bun
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - API_BASE_URL=${API_BASE_URL:-http://app-dev:8080}
+
+      # OVO SE MENJA PO POTREBI.
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://192.168.1.8:3000}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://192.168.1.8:8080}
+
     env_file:
       - path: ../.env
         required: false
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    name: shared-network
+volumes:
+  bun-cache:
